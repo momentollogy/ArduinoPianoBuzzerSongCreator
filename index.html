@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Piano App</title>
+  <style>
+    body {
+    font-family: Arial, sans-serif;
+    }
+    .white {
+    display: inline-block;
+    background-color: white;
+    border: 1px solid black;
+    height: 150px;
+    width: 50px;
+    text-align: center;
+    line-height: 150px;
+    font-weight: bold;
+    cursor: pointer;
+    }
+    .black {
+    display: inline-block;
+    background-color: black;
+    border: 1px solid black;
+    height: 100px;
+    width: 30px;
+    margin-left: -20px;
+    margin-right: -20px;
+    z-index: 1;
+    text-align: center;
+    line-height: 100px;
+    font-weight: bold;
+    cursor: pointer;
+    }
+    .white.pressed {
+    background-color: #ccc;
+    }
+    .black.pressed {
+    background-color: #333;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Simple Piano App</h1>
+  <div id="piano">
+    <div class="key white" data-note="65">A</div>
+    <div class="key black" data-note="87">W</div>
+    <div class="key white" data-note="83">S</div>
+    <div class="key black" data-note="69">E</div>
+    <div class="key white" data-note="68">D</div>
+    <div class="key white" data-note="70">F</div>
+    <div class="key black" data-note="84">T</div>
+    <div class="key white" data-note="71">G</div>
+    <div class="key black" data-note="89">Y</div>
+    <div class="key white" data-note="72">H</div>
+    <div class="key black" data-note="85">U</div>
+    <div class="key white" data-note="74">J</div>
+    <div class="key white" data-note="75">K</div>
+    <div class="key black" data-note="79">O</div>
+    <div class="key white" data-note="76">L</div>
+    <div class="key black" data-note="80">P</div>
+    <div class="key white" data-note="59">;</div>
+    <div class="key white" data-note="222">'</div>
+  </div>
+  
+
+<!-- ... existing HTML code ... -->
+<div id="piano">
+    <!-- ... piano keys ... -->
+  </div>
+  <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" />
+  <button id="record">Record</button>
+  <button id="stop" disabled>Stop</button>
+  <button id="clear">Clear</button>
+  <button id="play" onclick="playSongArray()">Play</button>
+
+
+  <input type="range" min="0" max="1" step="0.01" value="0.5" id="slider" oninput="updateSliderValue(this.value)">
+
+
+  <label for="metronome-bpm">Metronome BPM: </label>
+<input type="number" id="metronome-bpm" value="120" min="40" max="240" />
+<button id="start-metronome">Start</button>
+<button id="stop-metronome">Stop</button>
+
+  <div id="recording"></div>
+  <!-- ... existing script tag ... -->
+
+  <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
+
+
+  <script>
+
+
+let sliderValue = 0.5;
+
+function updateSliderValue(value) {
+  sliderValue = parseFloat(value);
+}
+
+
+   // Create a Web Audio API context
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Frequencies for the piano keys (C4 to C5)
+const frequencies = {
+  65: 261.63, // A
+  87: 277.18, // W
+  83: 293.66, // S
+  69: 311.13, // E
+  68: 329.63, // D
+  70: 349.23, // F
+  84: 369.99, // T
+  71: 392.00, // G
+  89: 415.30, // Y
+  72: 440.00, // H
+  85: 466.16, // U
+  74: 493.88, // J
+  75: 523.25, // K
+  79: 554.37, // O
+  76: 587.33, // L
+  80: 622.25, // P
+  59: 659.26, // ;
+  222: 698.26, // ;
+};
+
+const noteNames = {
+  261.63: "NOTE_C4",
+  277.18: "NOTE_Cs4",
+  293.66: "NOTE_D4",
+  311.13: "NOTE_Ds4",
+  329.63: "NOTE_E4",
+  349.23: "NOTE_F4",
+  369.99: "NOTE_Fs4",
+  392.00: "NOTE_G4",
+  415.30: "NOTE_Gs4",
+  440.00: "NOTE_A4",
+  466.16: "NOTE_As4",
+  493.88: "NOTE_B4",
+  523.25: "NOTE_C5",
+  554.37: "NOTE_Cs5",
+  587.33: "NOTE_D5",
+  622.25: "NOTE_Ds5",
+  659.26: "NOTE_E5",
+  698.26: "NOTE_F5",
+};
+
+
+let playingNotes = new Set();
+
+// Map DURATION TO NOTE LENGTH
+function mapDurationToNoteLength(duration, isRest) {
+  const noteLengths = {
+    108: "NOTE_THIRTY_SECOND",
+    216: "NOTE_SIXTEENTH",
+    324: "NOTE_EIGHTH",
+    648: "NOTE_QUARTER",
+    1296: "NOTE_HALF",
+    2592: "NOTE_WHOLE",
+  };
+
+  if (!isRest) {
+    if (sliderValue >= 0.5) {
+      delete noteLengths[108]; // Remove 32nd notes based on the slider value
+    }
+    if (sliderValue >= 1) {
+      delete noteLengths[216]; // Remove 16th notes based on the slider value
+    }
+  }
+
+  let closestDuration = Object.keys(noteLengths).reduce((prev, curr) => {
+    return Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev;
+  });
+
+  return noteLengths[closestDuration];
+}
+
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+
+// Function to play a note
+function playNote(frequency, keyElement, onStop) {
+  const oscillator = audioContext.createOscillator();
+  oscillator.type = 'sine'; // Wave type
+  oscillator.frequency.value = frequency;
+  oscillator.connect(audioContext.destination);
+  oscillator.start();
+
+  const startTime = audioContext.currentTime * 1000;
+
+  // Add the pressed state for the key
+  keyElement.classList.add('pressed');
+
+  const handleMouseUp = () => {
+  oscillator.stop();
+  keyElement.classList.remove('pressed');
+  keyElement.removeEventListener('mouseup', handleMouseUp);
+  const duration = (audioContext.currentTime * 1000) - startTime;
+  playingNotes.delete(Number(keyElement.dataset.note)); // remove key code from playingNotes Set
+  recordingNote = false; // reset recordingNote flag
+  if (onStop) onStop(duration);
+};
+
+  keyElement.addEventListener('mouseup', handleMouseUp);
+
+  // Add the return statement here
+  return oscillator;
+}
+
+//Funtion to add a rest
+function addRestIfNeeded() {
+  if (recordedNotes.length > 1) {
+    const previousNote = recordedNotes[recordedNotes.length - 2];
+    const restDuration = (recordedNotes[recordedNotes.length - 1].startTime) - (previousNote.startTime + previousNote.duration);
+    if (restDuration > 0) {
+      recordedNotes.splice(recordedNotes.length - 1, 0, { rest: true, duration: restDuration });
+    }
+  }
+}
+
+
+let recording = false;
+let startTime = null;
+let recordedNotes = [];
+let recordingNote = false;
+let recordingStartTime;
+
+
+// Start recording
+document.getElementById('record').addEventListener('click', () => {
+  recording = true;
+  startTime = Date.now();
+  recordedNotes = [];
+  document.getElementById('record').disabled = true;
+  document.getElementById('stop').disabled = false;
+});
+
+// Stop recording
+document.getElementById('stop').addEventListener('click', () => {
+  recording = false;
+  startTime = null;
+  document.getElementById('record').disabled = false;
+  document.getElementById('stop').disabled = true;
+  displayRecording();
+  stopMetronome(); // Add this line to stop the metronome when stopping the recording
+});
+
+
+//Clear button
+document.getElementById('clear').addEventListener('click', () => {
+  recordedNotes = [];
+  document.getElementById("recording").innerHTML = "";
+});
+
+//PLAY AND RECORD FUNCTION
+function playAndRecord(frequency, keyElement) {
+  if (!recordingNote) {
+    playNote(frequency, keyElement, duration => {
+      recordingNote = false;
+      
+      if (recording) {
+        if (!recordingStartTime) {
+          recordingStartTime = new Date().getTime();
+        }
+        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
+        if (restDuration > 0) {
+          recordedNotes.push({
+            rest: true,
+            duration: restDuration
+          });
+        }
+        recordedNotes.push({
+          frequency: frequency,
+          duration: duration
+        });
+        recordingStartTime = new Date().getTime();
+      }
+    });
+
+    recordingNote = true;
+  }
+}
+
+
+//REST FUNCTION
+function addRest() {
+  if (recording) {
+    const currentTime = new Date().getTime();
+    const restDuration = currentTime - recordingStartTime;
+    if (restDuration >= 100) { // Minimum rest duration, you can adjust this value
+      recordedNotes.push({
+        rest: true,
+        duration: restDuration,
+      });
+    }
+    recordingStartTime = currentTime;
+  }
+}
+
+
+const keyCodes = {
+  "Semicolon": 59,
+  'Quote': 222, // "'"
+};
+
+document.addEventListener('keydown', event => {
+  const keyCode = keyCodes[event.code] || event.keyCode;
+  const keyElement = document.querySelector(`.key[data-note="${keyCode}"]`);
+
+  if (keyElement && !playingNotes.has(keyCode)) {
+    playingNotes.add(keyCode);
+    playAndRecord(frequencies[keyCode], keyElement);
+  }
+});
+
+document.addEventListener('keyup', event => {
+  const keyCode = keyCodes[event.code] || event.keyCode;
+  const keyElement = document.querySelector(`.key[data-note="${keyCode}"]`);
+
+  if (keyElement) {
+    playingNotes.delete(keyCode);
+    keyElement.dispatchEvent(new MouseEvent('mouseup'));
+  }
+});
+
+
+// FUNCTION DISPLAYRECORDING
+function displayRecording() {
+  let output = "";
+  let songArray = "";
+
+  const songTitle = document.getElementById("song-title").value;
+  const notesCount = recordedNotes.length;
+
+  output += `${songTitle}[${notesCount}][2] =\n{\n`;
+
+  recordedNotes.forEach((note, index) => {
+    if (note.rest) {
+      output += `  {0, ${mapDurationToNoteLength(note.duration, true)}},\n`;
+    } else {
+      output += `  {${noteNames[note.frequency]}, ${mapDurationToNoteLength(note.duration)}},\n`;
+    }
+  });
+
+  output += "};";
+  songArray = output;
+
+  const recordingElement = document.getElementById("recording");
+  recordingElement.innerHTML = `<button id="copy-song">Copy Song</button><pre>${output}</pre>`;
+  
+  const copySongButton = document.getElementById("copy-song");
+  copySongButton.addEventListener("click", () => copySongToClipboard(output));
+}
+
+
+async function playSongArray() {
+  const formattedArray = songArray.match(/{[^}]+}/g);
+  if (formattedArray) {
+    for (const noteString of formattedArray) {
+      const [frequencyString, durationString] = noteString.replace(/[{}]/g, '').split(',').map(s => s.trim());
+      const frequency = frequencyString === "0" ? null : parseFloat(frequencyString);
+      const duration = parseInt(durationString);
+
+      if (frequency) {
+        const keyElement = document.querySelector(`.key[data-note="${Object.keys(frequencies).find(key => frequencies[key] === frequency)}"]`);
+        const oscillator = playNote(frequency, keyElement);
+        await new Promise(resolve => setTimeout(resolve, duration));
+        oscillator.stop();
+        keyElement.classList.remove('pressed');
+      } else {
+        await new Promise(resolve => setTimeout(resolve, duration));
+      }
+    }
+  }
+}
+
+
+
+
+//METRONOME STUFF
+
+let metronomeInterval = null;
+
+function createWhiteNoise() {
+  const bufferSize = 4096;
+  const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+  const output = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  const whiteNoiseSource = audioContext.createBufferSource();
+  whiteNoiseSource.buffer = buffer;
+  whiteNoiseSource.loop = true;
+
+  return whiteNoiseSource;
+}
+
+function startMetronome(bpm) {
+  const interval = 60 / bpm * 1000;
+  metronomeInterval = setInterval(() => {
+    const whiteNoiseSource = createWhiteNoise();
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = 0.2; // Adjust the volume of the click sound
+
+    const filterNode = audioContext.createBiquadFilter();
+    filterNode.type = 'bandpass';
+    filterNode.frequency.value = 2000; // Adjust the pitch of the click sound
+    filterNode.Q.value = 0.5;
+
+    whiteNoiseSource.connect(gainNode);
+    gainNode.connect(filterNode);
+    filterNode.connect(audioContext.destination);
+
+    whiteNoiseSource.start();
+    setTimeout(() => {
+      whiteNoiseSource.stop();
+    }, 50);
+  }, interval);
+}
+
+function stopMetronome() {
+  if (metronomeInterval) {
+    clearInterval(metronomeInterval);
+    metronomeInterval = null;
+  }
+}
+
+//METRONOME EVENT LISTENER
+document.getElementById("start-metronome").addEventListener("click", () => {
+  const bpm = parseInt(document.getElementById("metronome-bpm").value, 10);
+  startMetronome(bpm);
+});
+
+document.getElementById("stop-metronome").addEventListener("click", () => {
+  stopMetronome();
+});
+
+//PLAY EVENT LISTENER
+document.getElementById('play').addEventListener('click', () => {
+  playRecordedNotes(recordedNotes);
+});
+
+function getKeyCodeForFrequency(frequency) {
+  for (const [keyCode, freq] of Object.entries(frequencies)) {
+    if (freq === frequency) {
+      return keyCode;
+    }
+  }
+  return null;
+}
+
+async function playRecordedNotes(notes) {
+  const timeBetweenNotesMs = 50;
+
+  for (const note of notes) {
+    const noteLengthsMs = {
+      "NOTE_THIRTY_SECOND": 108,
+      "NOTE_SIXTEENTH": 216,
+      "NOTE_EIGHTH": 324,
+      "NOTE_QUARTER": 648,
+      "NOTE_HALF": 1296,
+      "NOTE_WHOLE": 2592,
+    };
+
+    console.log('Playing note:', note); // Debug: log the current note
+
+    if (note.rest) {
+      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+    } else {
+        const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+
+      if (!keyElement) {
+        console.error('Could not find key element for note:', note);
+        continue;
+      }
+
+      const oscillator = playNote(note.frequency, keyElement);
+
+      // Stop the oscillator after the note duration
+      setTimeout(() => {
+        console.log('Stopping note:', note); // Debug: log the note being stopped
+        oscillator.stop();
+        keyElement.classList.remove("pressed");
+      }, note.duration);
+
+      // Wait for the note duration plus the time delay before proceeding to the next note
+      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+    }
+  }
+}
+
+function quantize(value, step, precision) {
+  let decimalPlaces = Math.max(0, precision - Math.floor(Math.log10(step)));
+  let multiplier = Math.pow(10, decimalPlaces);
+  return Math.round(value / step * multiplier) / multiplier;
+}
+
+function quantizeNoteDuration(duration, step, precision) {
+  return quantize(duration, step, precision);
+}
+
+function quantizeRestDuration(duration, step, precision) {
+  return quantize(duration, step, precision);
+}
+
+let value = 10.4567;
+let step = 0.1;
+let precision = 3;
+let quantizedValue = quantize(value, step, precision);
+console.log(quantizedValue); // output: 10.5
+
+let noteDuration = 0.37; // Example note duration value
+let noteDurationStep = 1 / 16; // Quantize to 16th notes
+let noteDurationPrecision = 3;
+let quantizedNoteDuration = quantizeNoteDuration(noteDuration, noteDurationStep, noteDurationPrecision);
+console.log(quantizedNoteDuration); // output: 0.375
+
+let restDuration = 0.185; // Example rest duration value
+let thirtySecondNoteDuration = sixteenthNoteDuration / 2; // Calculate the duration of a 32nd note at 120 BPM
+let restDurationStep = thirtySecondNoteDuration; // Use the calculated duration as the quantization step
+let restDurationPrecision = 3;
+let quantizedRestDuration = quantizeRestDuration(restDuration, restDurationStep, restDurationPrecision);
+console.log(quantizedRestDuration); // output: 0.1875
+
+//COPYSONG TO CLIPBOARD FUNCTION
+function copySongToClipboard(songString) {
+  const songElement = document.createElement('textarea');
+  songElement.value = songString;
+  document.body.appendChild(songElement);
+  songElement.select();
+  document.execCommand('copy');
+  document.body.removeChild(songElement);
+  alert('Song copied to clipboard');
+}
+
+  </script>
+</body>
+</html>
