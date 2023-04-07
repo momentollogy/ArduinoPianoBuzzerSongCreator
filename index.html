@@ -70,6 +70,8 @@
 <div id="piano">
     <!-- ... piano keys ... -->
   </div>
+
+
   <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" />
   <button id="record">Record</button>
   <button id="stop" disabled>Stop</button>
@@ -90,6 +92,25 @@
 
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
 
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+  <br>
+
+
+  <div>
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/-HBDiNoQkAw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+  </div>
+
+  <br>
+
+
+  <a href="https://drive.google.com/file/d/1yrtmyYl0rtv1ygd7zXIvFQ-BlhMG3M76/view?usp=share_link" download>
+    Download Arduino IDE Code
+  </a>
+</p>
 
   <script>
 
@@ -537,7 +558,7 @@ let restDurationPrecision = 3;
 let quantizedRestDuration = quantizeRestDuration(restDuration, restDurationStep, restDurationPrecision);
 console.log(quantizedRestDuration); // output: 0.1875
 
-//COPYSONG TO CLIPBOARD FUNCTION
+//COPYSONG TO CLIPBOARTD FUNCTION
 function copySongToClipboard(songString) {
   const songElement = document.createElement('textarea');
   songElement.value = songString;
