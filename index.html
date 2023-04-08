@@ -92,16 +92,6 @@
 
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
 
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-
-
-  
-
 
   <div>
     <a href="https://www.youtube.com/watch?v=-HBDiNoQkAw">Watch Tutorial</a>
@@ -116,14 +106,11 @@
 </p>
 
 <a href="https://drive.google.com/file/d/1SWQt95t4wXOxO6g63XlXmQHOSjGSYQOA/view?usp=share_link" download>
-    Download HTML/JAVA Code
+    Download HTML/JAVA
   </a>
 </p>
 
-
-
   <script>
-
 
 let sliderValue = 0.5;
 
@@ -264,17 +251,18 @@ function addRestIfNeeded() {
 
 
 let recording = false;
+let playing = false;
 let startTime = null;
 let recordedNotes = [];
 let recordingNote = false;
 let recordingStartTime;
 
-
 // Start recording
 document.getElementById('record').addEventListener('click', () => {
   recording = true;
   startTime = Date.now();
-  recordedNotes = [];
+  recordedNotes = []; // Clear the recordedNotes array before starting a new recording
+  recordingStartTime = null; // Reset the recordingStartTime
   document.getElementById('record').disabled = true;
   document.getElementById('stop').disabled = false;
 });
@@ -289,41 +277,46 @@ document.getElementById('stop').addEventListener('click', () => {
   stopMetronome(); // Add this line to stop the metronome when stopping the recording
 });
 
-
 //Clear button
 document.getElementById('clear').addEventListener('click', () => {
   recordedNotes = [];
   document.getElementById("recording").innerHTML = "";
-});
+}); 
 
-//PLAY AND RECORD FUNCTION
+
+//PLAY AND RECORD FUNCTIONs
 function playAndRecord(frequency, keyElement) {
-  if (!recordingNote) {
-    playNote(frequency, keyElement, duration => {
-      recordingNote = false;
-      
-      if (recording) {
-        if (!recordingStartTime) {
-          recordingStartTime = new Date().getTime();
-        }
-        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
-        if (restDuration > 0) {
-          recordedNotes.push({
-            rest: true,
-            duration: restDuration
-          });
-        }
-        recordedNotes.push({
-          frequency: frequency,
-          duration: duration
-        });
-        recordingStartTime = new Date().getTime();
-      }
-    });
+    if (!recordingNote) {
+        playNote(frequency, keyElement, duration => {
+            recordingNote = false;
 
-    recordingNote = true;
-  }
+            if (recording) {
+                if (!recordingStartTime) {
+                    recordingStartTime = new Date().getTime();
+                }
+                const restDuration = (new Date().getTime() - recordingStartTime) - duration;
+                if (restDuration > 0) {
+                    recordedNotes.push({
+                        rest: true,
+                        duration: restDuration
+                    });
+                    console.log("Rest added:", { rest: true, duration: restDuration }); // Add this line
+                }
+                recordedNotes.push({
+                    frequency: frequency,
+                    duration: duration,
+                    startTime: new Date().getTime() // Add this line
+                });
+                console.log("Note added:", { frequency: frequency, duration: duration, startTime: new Date().getTime() }); // Add this line
+                recordingStartTime = new Date().getTime();
+            }
+        });
+
+        recordingNote = true;
+    }
 }
+
+
 
 
 //REST FUNCTION
@@ -369,39 +362,32 @@ document.addEventListener('keyup', event => {
 
 
 // FUNCTION DISPLAYRECORDING
-async function playRecordedNotes(recordedNotes) {
-  const timeBetweenNotesMs = 50;
+function displayRecording() {
+  let output = "";
+  let songArray = "";
 
-  for (const note of recordedNotes) {
-    console.log('Playing note:', note); // Debug: log the current note
+  const songTitle = document.getElementById("song-title").value;
+  const notesCount = recordedNotes.length;
 
+  output += `${songTitle}[${notesCount}][2] =\n{\n`;
+
+  recordedNotes.forEach((note, index) => {
     if (note.rest) {
-      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+      output += `  {0, ${mapDurationToNoteLength(note.duration, true)}},\n`;
     } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-
-      if (!keyElement) {
-        console.error('Could not find key element for note:', note);
-        continue;
-      }
-
-      const oscillator = playNote(note.frequency, keyElement);
-
-      // Stop the oscillator after the note duration
-      setTimeout(() => {
-        console.log('Stopping note:', note); // Debug: log the note being stopped
-        oscillator.stop();
-        keyElement.classList.remove("pressed");
-      }, note.duration);
-
-      // Wait for the note duration plus the time delay before proceeding to the next note
-      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+      output += `  {${noteNames[note.frequency]}, ${mapDurationToNoteLength(note.duration)}},\n`;
     }
-  }
+  });
+
+  output += "};";
+  songArray = output;
+
+  const recordingElement = document.getElementById("recording");
+  recordingElement.innerHTML = `<button id="copy-song">Copy Song</button><pre>${output}</pre>`;
+  
+  const copySongButton = document.getElementById("copy-song");
+  copySongButton.addEventListener("click", () => copySongToClipboard(output));
 }
-
-
-
 
 
 
@@ -465,10 +451,19 @@ document.getElementById("stop-metronome").addEventListener("click", () => {
   stopMetronome();
 });
 
+
 //PLAY EVENT LISTENER
 document.getElementById('play').addEventListener('click', () => {
-  playRecordedNotes(recordedNotes);
+  if (!playing) {
+    playRecordedNotes(recordedNotes);
+  }
 });
+
+
+
+
+
+
 
 function getKeyCodeForFrequency(frequency) {
   for (const [keyCode, freq] of Object.entries(frequencies)) {
@@ -495,9 +490,10 @@ async function playRecordedNotes(notes) {
     console.log('Playing note:', note); // Debug: log the current note
 
     if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
       await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
     } else {
-        const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
 
       if (!keyElement) {
         console.error('Could not find key element for note:', note);
@@ -506,18 +502,24 @@ async function playRecordedNotes(notes) {
 
       const oscillator = playNote(note.frequency, keyElement);
 
-      // Stop the oscillator after the note duration
-      setTimeout(() => {
+      // Stop the oscillator after the note duration and wait for it
+      await new Promise(resolve => setTimeout(() => {
         console.log('Stopping note:', note); // Debug: log the note being stopped
         oscillator.stop();
         keyElement.classList.remove("pressed");
-      }, note.duration);
+        resolve();
+      }, note.duration));
 
-      // Wait for the note duration plus the time delay before proceeding to the next note
-      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+      // Wait for the time delay before proceeding to the next note
+      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`); // Debug: log the time between notes
+      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
     }
   }
 }
+
+
+
+
 
 function quantize(value, step, precision) {
   let decimalPlaces = Math.max(0, precision - Math.floor(Math.log10(step)));
