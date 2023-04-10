@@ -41,6 +41,13 @@
     }
 
   </style>
+
+
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<meta name="google-signin-client_id" content="303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com">
+
+
 </head>
 <body>
   <h1>Arduino Piano Buzzer Song Creator V1 <br> <small>by momentollogy</small><br></h1>
@@ -90,6 +97,11 @@
   <div id="recording"></div>
   <!-- ... existing script tag ... -->
 
+  <div class="g-signin2" data-onsuccess="onSignIn"></div>
+  <button onclick="signOut()">Sign out</button>
+
+
+
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
 
 
@@ -111,6 +123,38 @@
 </p>
 
   <script>
+
+// API STUFF
+function onSignIn(googleUser) {
+  const token = googleUser.getAuthResponse().id_token;
+  gapi.load('client', () => initClient(token));
+}
+
+function signOut() {
+  const auth2 = gapi.auth2.getAuthInstance();
+  auth2.signOut().then(() => {
+    console.log('User signed out.');
+    gapi.client = null;
+  });
+}
+
+function initClient(token) {
+  gapi.client.init({
+    apiKey: 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78',
+    clientId: '303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com',
+    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    idToken: token,
+  }).then(() => {
+    console.log('Client initialized.');
+    // Call functions that require authenticated access to the API here
+  }, error => {
+    console.error('Error initializing client:', error);
+  });
+}
+
+
+
 
 let sliderValue = 0.5;
 
@@ -452,30 +496,12 @@ document.getElementById("stop-metronome").addEventListener("click", () => {
 });
 
 
-
 //PLAY EVENT LISTENER
-let playback;
-
-document.getElementById('play').addEventListener('click', async () => {
+document.getElementById('play').addEventListener('click', () => {
   if (!playing) {
-    playing = true;
-    document.getElementById('play').innerText = "Stop";
-    playback = playRecordedNotes(recordedNotes);
-    await playback;
-    if (playing) {
-      playing = false;
-      document.getElementById('play').innerText = "Play";
-    }
-  } else {
-    playing = false;
-    document.getElementById('play').innerText = "Play";
-    stopPlayback = true;
-    if (playback) {
-      await playback;
-    }
+    playRecordedNotes(recordedNotes);
   }
 });
-
 
 
 
@@ -492,68 +518,38 @@ function getKeyCodeForFrequency(frequency) {
   return null;
 }
 
+async function playRecordedNotes(notes) {
+  const timeBetweenNotesMs = 50;
 
-function noteTypeToDurationMilliseconds(noteType, tempo) {
-  const quarterNoteDuration = (60 / tempo) * 1000;
-  
-  switch (noteType) {
-    case NOTE_THIRTY_SECOND:
-      return quarterNoteDuration / 8;
-    case NOTE_SIXTEENTH:
-      return quarterNoteDuration / 4;
-    case NOTE_EIGHTH:
-      return quarterNoteDuration / 2;
-    case NOTE_QUARTER:
-      return quarterNoteDuration;
-    case NOTE_HALF:
-      return quarterNoteDuration * 2;
-    case NOTE_WHOLE:
-      return quarterNoteDuration * 4;
-    default:
-      return 0;
-  }
-}
+  for (const note of notes) {
+    console.log('Playing note:', note);
 
-async function playRecordedNotes(notes, tempo) {
-  for (const notePair of notes) {
-    if (stopPlayback) {
-      stopPlayback = false;
-      break;
-    }
-    const frequency = notePair[0];
-    const noteType = notePair[1];
-    const durationMilliseconds = noteTypeToDurationMilliseconds(noteType, tempo);
-
-    if (frequency === 0) {
-      await new Promise(resolve => setTimeout(resolve, durationMilliseconds));
+    if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`);
+      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
     } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(frequency)}"]`);
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
 
       if (!keyElement) {
-        console.error('Could not find key element for note:', frequency);
+        console.error('Could not find key element for note:', note);
         continue;
       }
 
-      const oscillator = playNote(frequency, keyElement);
+      const oscillator = playNote(note.frequency, keyElement);
+      const duration = parseInt(note.duration); // Parse the recorded note duration as integer
 
-      // Stop the oscillator after the note duration and wait for it
       await new Promise(resolve => setTimeout(() => {
-        oscillator.stop();
+        console.log('Stopping note:', note);
+        oscillator.stop(0);
         keyElement.classList.remove("pressed");
         resolve();
-      }, durationMilliseconds));
+      }, duration));
+
+      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
     }
   }
 }
-
-
-
-
-
-
-
-
-
 
 
 
