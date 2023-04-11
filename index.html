@@ -48,6 +48,8 @@
 <meta name="google-signin-client_id" content="303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com">
 
 
+
+
 </head>
 <body>
   <h1>Arduino Piano Buzzer Song Creator V1 <br> <small>by momentollogy</small><br></h1>
@@ -436,8 +438,6 @@ function displayRecording() {
   copySongButton.addEventListener("click", () => copySongToClipboard(output));
 }
 
-
-
 //METRONOME STUFF
 
 let metronomeInterval = null;
@@ -505,11 +505,6 @@ document.getElementById('play').addEventListener('click', () => {
     playRecordedNotes(recordedNotes);
   }
 });
-
-
-
-
-
 
 
 function getKeyCodeForFrequency(frequency) {
@@ -600,14 +595,60 @@ function copySongToClipboard(songString) {
   alert('Song copied to clipboard');
 }
 
-
-
-
-
 //POST AND SAVE SONGS
 
-document.getElementById('postSongButton').addEventListener('click', postSong);
+document.getElementById('postSongButton').addEventListener('click', saveSong);
 document.getElementById('loadSongButton').addEventListener('click', loadSong);
+
+
+function saveSong() {
+  // Authenticate and load the Google Sheets API
+  gapi.load("client:auth2", async function() {
+    try {
+      await gapi.client.init({
+        apiKey: "AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78",
+        clientId: "303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/spreadsheets",
+      });
+
+      if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+        await gapi.auth2.getAuthInstance().signIn();
+      }
+
+      // Format song data for the Google Sheet
+      const songTitle = "Untitled_Song_1"; // Replace this with the actual song title
+      const songLength = 13; // Replace this with the actual song length
+      const songArray = JSON.stringify(Untitled_Song_1); // Replace this with the actual song array
+
+      const values = [[songTitle, songLength, songArray]];
+
+      // Call the Google Sheets API to append the data
+      const spreadsheetId = "1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg";
+      const range = "Sheet1!A:C";
+      const response = await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: spreadsheetId,
+        range: range,
+        valueInputOption: "RAW",
+        insertDataOption: "INSERT_ROWS",
+        resource: {
+          values: values,
+        },
+      });
+
+      console.log("Song data saved to Google Sheet:", response.result);
+    } catch (error) {
+      console.error("Error saving song data:", error);
+    }
+  });
+}
+
+function postSong() {
+  // You can use this function to post the song data to a different service
+  // For now, it just calls saveSong
+  saveSong();
+}
+
+
 
 
 async function postSong() {
@@ -637,8 +678,6 @@ async function loadSong() {
     alert('No songs found in the Google Sheet.');
   }
 }
-
-
 
 
 async function saveSongToSheet(songData) {
@@ -694,7 +733,6 @@ function loadRecordedSong(notes) {
   // Update the UI
   displayRecording();
 }
-
 
   </script>
 </body>
