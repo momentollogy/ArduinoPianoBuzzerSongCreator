@@ -103,6 +103,9 @@
 
 
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
+  <button id="postSongButton" class="post-song">Post Song</button>
+<button id="loadSongButton" class="load-song">Load Song</button>
+
 
 
   <div>
@@ -596,6 +599,102 @@ function copySongToClipboard(songString) {
   document.body.removeChild(songElement);
   alert('Song copied to clipboard');
 }
+
+
+
+
+
+//POST AND SAVE SONGS
+
+document.getElementById('postSongButton').addEventListener('click', postSong);
+document.getElementById('loadSongButton').addEventListener('click', loadSong);
+
+
+async function postSong() {
+  const songTitle = prompt('Enter a title for your song:');
+  if (songTitle) {
+    saveSongToSheet([songTitle, recordedNotes.map(note => JSON.stringify(note)).join(',')]);
+  } else {
+    alert('Song title is required to save the song.');
+  }
+}
+
+
+
+async function loadSong() {
+  const songs = await fetchSongsFromSheet();
+  if (songs.length > 0) {
+    const selectedTitle = prompt('Enter the title of the song you want to load:\n\n' + songs.map(song => `${song[0]} (Length: ${song[1].split(',').length})`).join('\n'));
+
+    const selectedSong = songs.find(song => song[0] === selectedTitle);
+    if (selectedSong) {
+      const notes = selectedSong[1].split(',').map(note => JSON.parse(note));
+      loadRecordedSong(notes);
+    } else {
+      alert('Song not found. Please enter a valid title.');
+    }
+  } else {
+    alert('No songs found in the Google Sheet.');
+  }
+}
+
+
+
+
+async function saveSongToSheet(songData) {
+  const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
+  const range = 'Sheet1!A:C';
+  const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
+
+  const requestBody = {
+    values: [songData],
+  };
+
+  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + gapi.auth.getToken().access_token,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  const result = await response.json();
+
+  if (result.updates) {
+    alert('Song saved successfully.');
+  } else {
+    alert('An error occurred while saving the song.');
+  }
+}
+
+
+
+
+async function fetchSongsFromSheet() {
+  const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
+  const range = 'A:B';
+  const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
+  const apiKey = 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78'; // Replace this with your API key
+
+  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}?key=${apiKey}`, {
+    headers: {
+      'Authorization': 'Bearer ' + gapi.auth.getToken().access_token,
+    },
+  });
+
+  const result = await response.json();
+  return result.values || [];
+}
+
+function loadRecordedSong(notes) {
+  recordedNotes.length = 0;
+  recordedNotes.push(...notes);
+
+  // Update the UI
+  displayRecording();
+}
+
 
   </script>
 </body>
