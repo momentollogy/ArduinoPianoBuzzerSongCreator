@@ -597,27 +597,60 @@ function copySongToClipboard(songString) {
 
 //POST AND SAVE SONGS
 
-document.getElementById('postSongButton').addEventListener('click', saveSong);
-document.getElementById('loadSongButton').addEventListener('click', loadSong);
 
 
+async function handleClientLoad() {
+  await gapi.load('client:auth2', initClient);
+}
 
-
-function postSong() {
-  // You can use this function to post the song data to a different service
-  // For now, it just calls saveSong
-  saveSong();
+async function initClient() {
+  try {
+    await gapi.client.init({
+      apiKey: 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78',
+      clientId: '303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com',
+      scope: 'https://www.googleapis.com/auth/spreadsheets'
+    });
+  } catch (error) {
+    console.error('Error initializing Google API:', error);
+  }
 }
 
 
 
 
-async function postSong() {
-  const songTitle = prompt('Enter a title for your song:');
-  if (songTitle) {
-    saveSongToSheet([songTitle, recordedNotes.map(note => JSON.stringify(note)).join(',')]);
-  } else {
-    alert('Song title is required to save the song.');
+document.getElementById('postSongButton').addEventListener('click', saveSong);
+document.getElementById('loadSongButton').addEventListener('click', loadSong);
+
+
+
+async function saveSong() {
+  try {
+    // Authenticate and load the Google Sheets API
+    await gapi.auth2.getAuthInstance().signIn();
+
+    // Format song data for the Google Sheet
+    const songTitle = document.getElementById("song-title").value || "Untitled_Song";
+    const songLength = recordedNotes.length;
+    const songArray = recordedNotes.map(note => JSON.stringify(note)).join(',');
+
+    const values = [[songTitle, songLength, songArray]];
+
+    // Call the Google Sheets API to append the data
+    const spreadsheetId = "1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg";
+    const range = "Sheet1!A:C";
+    const response = await gapi.client.sheets.spreadsheets.values.append({
+      spreadsheetId: spreadsheetId,
+      range: range,
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
+      resource: {
+        values: values,
+      },
+    });
+
+    console.log("Song data saved to Google Sheet:", response.result);
+  } catch (error) {
+    console.error("Error saving song data:", error);
   }
 }
 
@@ -696,5 +729,12 @@ function loadRecordedSong(notes) {
 }
 
   </script>
+
+<script async defer src="https://apis.google.com/js/api.js"
+onload="this.onload=function(){};handleClientLoad()"
+onreadystatechange="if (this.readyState === 'complete') this.onload()">
+</script>
+
+
 </body>
 </html>
