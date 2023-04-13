@@ -100,7 +100,8 @@
   <!-- ... existing script tag ... -->
 
   <div class="g-signin2" data-onsuccess="onSignIn" data-onfailure="handleSignInFailure"></div>
-  <button onclick="signOut()">Sign out</button>
+  <button id="signinButton" onclick="signOut()">Sign Out</button>
+  
 
 
 
@@ -150,16 +151,19 @@ function signOut() {
 
 function updateSignInStatus(googleUser) {
   const signInButton = document.getElementById('signinButton');
+  const gSignIn = document.getElementsByClassName('g-signin2')[0];
 
   if (googleUser) {
-    signInButton.innerText = 'Sign Out';
-    signInButton.onclick = signOut;
+    signInButton.style.display = 'block';
+    gSignIn.style.display = 'none';
   } else {
-    signInButton.innerText = 'Sign In';
-    signInButton.onclick = () => {
-      gapi.auth2.getAuthInstance().signIn().then(onSignIn);
-    };
+    signInButton.style.display = 'none';
+    gSignIn.style.display = 'block';
   }
+}
+
+function handleSignInFailure(error) {
+  console.error('Error during sign-in:', error);
 }
 
 
