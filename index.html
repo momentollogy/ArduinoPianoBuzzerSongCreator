@@ -644,11 +644,16 @@ async function initClient() {
 }
 
 
-document.getElementById('postSongButton').addEventListener('click', saveSong);
+document.getElementById('postSongButton').addEventListener('click', () => {
+  console.log('Post Song button clicked'); // Add this line
+  saveSong();
+});
 document.getElementById('loadSongButton').addEventListener('click', loadSong);
 
 
 function saveSong() {
+  console.log('saveSong function called'); // Add this line
+
   try {
     const songTitle = document.getElementById("song-title").value || "Untitled_Song";
     const songLength = recordedNotes.length;
