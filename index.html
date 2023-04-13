@@ -651,7 +651,7 @@ async function saveSong() {
   try {
     // Authenticate and load the Google Sheets API
     await initClient();
-    await gapi.auth2.getAuthInstance().signIn();
+    // await gapi.auth2.getAuthInstance().signIn(); // Comment out this line
 
     // Format song data for the Google Sheet
     const songTitle = document.getElementById("song-title").value || "Untitled_Song";
@@ -682,6 +682,7 @@ async function saveSong() {
 
 
 
+
 async function loadSong() {
   const songs = await fetchSongsFromSheet();
   if (songs.length > 0) {
@@ -704,19 +705,17 @@ async function loadSong() {
 
 async function fetchSongsFromSheet() {
   const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
-  const range = 'A:B';
+  const range = 'A:C';
   const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
   const apiKey = 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78';
 
-  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}?key=${apiKey}`, {
-    headers: {
-      'Authorization': 'Bearer ' + gapi.auth.getToken().access_token,
-    },
-  });
-
+  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}?key=${apiKey}`);
   const result = await response.json();
   return result.values || [];
 }
+
+
+
 
 function loadRecordedSong(notes) {
   recordedNotes.length = 0;
