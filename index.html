@@ -654,27 +654,26 @@ document.getElementById('postSongButton').addEventListener('click', () => {
 document.getElementById('loadSongButton').addEventListener('click', loadSong);
 
 
-function saveSong() {
-  console.log('saveSong function called'); // Add this line
+async function saveSong() {
+  const songTitle = document.getElementById("songTitle").value || "Untitled_Song";
+  const songNotes = recordedNotes.map((note) => JSON.stringify(note));
+  const songData = {
+    title: songTitle,
+    length: songNotes.length,
+    notes: songNotes,
+  };
 
   try {
-    const songTitle = document.getElementById("song-title").value || "Untitled_Song";
-    const songLength = recordedNotes.length;
-    const songArray = recordedNotes.map(note => JSON.stringify(note)).join(',');
-
-    const songData = {
-      title: songTitle,
-      length: songLength,
-      notes: songArray,
-    };
-
-    localStorage.setItem(songTitle, JSON.stringify(songData));
-
-    console.log("Song data saved to local storage:", songData);
+    await fetchSongsFromSheet(songData);
+    console.log("Song data saved to Google Sheets:", songData);
   } catch (error) {
-    console.error("Error saving song data:", error);
+    console.error("Error saving song data to Google Sheets:", error);
   }
+
+  localStorage.setItem(`song_${songTitle}`, JSON.stringify(songData));
+  console.log(`Song data saved to local storage:`, JSON.stringify(songData));
 }
+
 
 
 
@@ -700,16 +699,25 @@ async function loadSong() {
 
 
 
-async function fetchSongsFromSheet() {
-  const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
-  const range = 'A:C';
-  const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
-  const apiKey = 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78';
+async function fetchSongsFromSheet(songData) {
+  const params = {
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Sheet1",
+    valueInputOption: "RAW",
+  };
+  const valueRangeBody = {
+    range: "Sheet1",
+    majorDimension: "ROWS",
+    values: [[songData.title, songData.length, ...songData.notes]],
+  };
 
-  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}?key=${apiKey}`);
-  const result = await response.json();
-  return result.values || [];
+  try {
+    await gapi.client.sheets.spreadsheets.values.append(params, valueRangeBody);
+  } catch (error) {
+    console.error("Error appending row to sheet:", error);
+  }
 }
+
 
 
 
