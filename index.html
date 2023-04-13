@@ -131,28 +131,37 @@
 
 // API STUFF
 function onSignIn(googleUser) {
-  // Show the sign-out button
-  const signOutButton = document.createElement('button');
-  signOutButton.textContent = 'Sign Out';
-  signOutButton.onclick = signOut;
-  document.body.appendChild(signOutButton);
-}
-
-function onSignInFailure(error) {
-  console.error('Error signing in:', error);
+  const token = googleUser.getAuthResponse().id_token;
+  gapi.load('client', () => {
+    initClient(token).then(() => {
+      updateSignInStatus();
+    });
+  });
 }
 
 function signOut() {
   const auth2 = gapi.auth2.getAuthInstance();
   auth2.signOut().then(() => {
     console.log('User signed out.');
-    // Remove the sign-out button
-    const signOutButton = document.querySelector('button[onclick="signOut()"]');
-    if (signOutButton) {
-      document.body.removeChild(signOutButton);
-    }
+    gapi.client = null;
+    updateSignInStatus();
   });
 }
+
+function updateSignInStatus() {
+  const authInstance = gapi.auth2.getAuthInstance();
+  const isSignedIn = authInstance.isSignedIn.get();
+  const signInButton = document.getElementById('signinButton');
+
+  if (isSignedIn) {
+    signInButton.innerText = 'Sign Out';
+    signInButton.onclick = signOut;
+  } else {
+    signInButton.innerText = 'Sign In';
+    signInButton.onclick = onSignIn;
+  }
+}
+
 
 async function initClient(token) {
   await gapi.load('client:auth2', async () => {
