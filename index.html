@@ -633,10 +633,10 @@ document.getElementById('postSongButton').addEventListener('click', saveSong);
 document.getElementById('loadSongButton').addEventListener('click', loadSong);
 
 
-
 async function saveSong() {
   try {
     // Authenticate and load the Google Sheets API
+    await initClient();
     await gapi.auth2.getAuthInstance().signIn();
 
     // Format song data for the Google Sheet
@@ -664,6 +664,7 @@ async function saveSong() {
     console.error("Error saving song data:", error);
   }
 }
+
 
 
 
