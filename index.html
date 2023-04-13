@@ -99,7 +99,7 @@
   <div id="recording"></div>
   <!-- ... existing script tag ... -->
 
-  <div class="g-signin2" data-onsuccess="onSignIn"></div>
+  <div class="g-signin2" data-onsuccess="onSignIn" data-onfailure="handleSignInFailure"></div>
   <button onclick="signOut()">Sign out</button>
 
 
@@ -131,17 +131,29 @@
 
 // API STUFF
 function onSignIn(googleUser) {
-  const token = googleUser.getAuthResponse().id_token;
-  gapi.load('client', () => initClient(token));
+  // Show the sign-out button
+  const signOutButton = document.createElement('button');
+  signOutButton.textContent = 'Sign Out';
+  signOutButton.onclick = signOut;
+  document.body.appendChild(signOutButton);
+}
+
+function onSignInFailure(error) {
+  console.error('Error signing in:', error);
 }
 
 function signOut() {
   const auth2 = gapi.auth2.getAuthInstance();
   auth2.signOut().then(() => {
     console.log('User signed out.');
-    gapi.client = null;
+    // Remove the sign-out button
+    const signOutButton = document.querySelector('button[onclick="signOut()"]');
+    if (signOutButton) {
+      document.body.removeChild(signOutButton);
+    }
   });
 }
+
 
 function initClient(token) {
   gapi.client.init({
@@ -158,6 +170,9 @@ function initClient(token) {
   });
 }
 
+function handleSignInFailure(error) {
+  console.error('Error during sign-in:', error);
+}
 
 
 
@@ -599,10 +614,6 @@ function copySongToClipboard(songString) {
 
 
 
-async function handleClientLoad() {
-  await gapi.load('client:auth2', initClient);
-}
-
 async function initClient() {
   try {
     await gapi.client.init({
@@ -614,8 +625,6 @@ async function initClient() {
     console.error('Error initializing Google API:', error);
   }
 }
-
-
 
 
 document.getElementById('postSongButton').addEventListener('click', saveSong);
@@ -674,41 +683,13 @@ async function loadSong() {
 }
 
 
-async function saveSongToSheet(songData) {
-  const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
-  const range = 'Sheet1!A:C';
-  const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
-
-  const requestBody = {
-    values: [songData],
-  };
-
-  const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + gapi.auth.getToken().access_token,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
-
-  const result = await response.json();
-
-  if (result.updates) {
-    alert('Song saved successfully.');
-  } else {
-    alert('An error occurred while saving the song.');
-  }
-}
-
-
 
 
 async function fetchSongsFromSheet() {
   const sheetId = '1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg';
   const range = 'A:B';
   const sheetsApi = 'https://sheets.googleapis.com/v4/spreadsheets';
-  const apiKey = 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78'; // Replace this with your API key
+  const apiKey = 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78';
 
   const response = await fetch(`${sheetsApi}/${sheetId}/values/${range}?key=${apiKey}`, {
     headers: {
@@ -729,6 +710,12 @@ function loadRecordedSong(notes) {
 }
 
   </script>
+
+<script>
+  async function handleClientLoad() {
+    await gapi.load('client:auth2', initClient);
+  }
+</script>
 
 <script async defer src="https://apis.google.com/js/api.js"
 onload="this.onload=function(){};handleClientLoad()"
