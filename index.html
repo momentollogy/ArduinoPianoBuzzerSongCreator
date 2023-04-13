@@ -107,6 +107,7 @@
 
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
   <button id="postSongButton" class="post-song">Post Song</button>
+  
 <button id="loadSongButton" class="load-song">Load Song</button>
 
 
@@ -647,33 +648,21 @@ document.getElementById('postSongButton').addEventListener('click', saveSong);
 document.getElementById('loadSongButton').addEventListener('click', loadSong);
 
 
-async function saveSong() {
+function saveSong() {
   try {
-    // Authenticate and load the Google Sheets API
-    await initClient();
-    // await gapi.auth2.getAuthInstance().signIn(); // Comment out this line
-
-    // Format song data for the Google Sheet
     const songTitle = document.getElementById("song-title").value || "Untitled_Song";
     const songLength = recordedNotes.length;
     const songArray = recordedNotes.map(note => JSON.stringify(note)).join(',');
 
-    const values = [[songTitle, songLength, songArray]];
+    const songData = {
+      title: songTitle,
+      length: songLength,
+      notes: songArray,
+    };
 
-    // Call the Google Sheets API to append the data
-    const spreadsheetId = "1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg";
-    const range = "Sheet1!A:C";
-    const response = await gapi.client.sheets.spreadsheets.values.append({
-      spreadsheetId: spreadsheetId,
-      range: range,
-      valueInputOption: "RAW",
-      insertDataOption: "INSERT_ROWS",
-      resource: {
-        values: values,
-      },
-    });
+    localStorage.setItem(songTitle, JSON.stringify(songData));
 
-    console.log("Song data saved to Google Sheet:", response.result);
+    console.log("Song data saved to local storage:", songData);
   } catch (error) {
     console.error("Error saving song data:", error);
   }
