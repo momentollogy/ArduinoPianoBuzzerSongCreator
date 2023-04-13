@@ -154,21 +154,23 @@ function signOut() {
   });
 }
 
-
-function initClient(token) {
-  gapi.client.init({
-    apiKey: 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78',
-    clientId: '303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com',
-    discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    idToken: token,
-  }).then(() => {
-    console.log('Client initialized.');
-    // Call functions that require authenticated access to the API here
-  }, error => {
-    console.error('Error initializing client:', error);
+async function initClient(token) {
+  await gapi.load('client:auth2', async () => {
+    try {
+      await gapi.client.init({
+        apiKey: 'AIzaSyA90ftyrgjmJPfzKeXYypzBdO9IJlbHU78',
+        clientId: '303614643987-2au0ltghltd0u2vk7g36t3ofmtf63vos.apps.googleusercontent.com',
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        scope: 'https://www.googleapis.com/auth/spreadsheets',
+        idToken: token,
+      });
+      console.log('Client initialized.');
+    } catch (error) {
+      console.error('Error initializing client:', error);
+    }
   });
 }
+
 
 function handleSignInFailure(error) {
   console.error('Error during sign-in:', error);
