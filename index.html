@@ -134,7 +134,7 @@ function onSignIn(googleUser) {
   const token = googleUser.getAuthResponse().id_token;
   gapi.load('client', () => {
     initClient(token).then(() => {
-      updateSignInStatus();
+      updateSignInStatus(googleUser);
     });
   });
 }
@@ -144,23 +144,24 @@ function signOut() {
   auth2.signOut().then(() => {
     console.log('User signed out.');
     gapi.client = null;
-    updateSignInStatus();
+    updateSignInStatus(null);
   });
 }
 
-function updateSignInStatus() {
-  const authInstance = gapi.auth2.getAuthInstance();
-  const isSignedIn = authInstance.isSignedIn.get();
+function updateSignInStatus(googleUser) {
   const signInButton = document.getElementById('signinButton');
 
-  if (isSignedIn) {
+  if (googleUser) {
     signInButton.innerText = 'Sign Out';
     signInButton.onclick = signOut;
   } else {
     signInButton.innerText = 'Sign In';
-    signInButton.onclick = onSignIn;
+    signInButton.onclick = () => {
+      gapi.auth2.getAuthInstance().signIn().then(onSignIn);
+    };
   }
 }
+
 
 
 async function initClient(token) {
