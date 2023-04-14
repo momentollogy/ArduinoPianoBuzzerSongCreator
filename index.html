@@ -167,8 +167,6 @@ const noteNames = {
 
 
 let playingNotes = new Set();
-const sixteenthNoteDuration = 0.25; // Adjust this value according to your needs
-
 
 // Map DURATION TO NOTE LENGTH
 function mapDurationToNoteLength(duration, isRest) {
@@ -454,30 +452,12 @@ document.getElementById("stop-metronome").addEventListener("click", () => {
 });
 
 
-
 //PLAY EVENT LISTENER
-let playback;
-
-document.getElementById('play').addEventListener('click', async () => {
+document.getElementById('play').addEventListener('click', () => {
   if (!playing) {
-    playing = true;
-    document.getElementById('play').innerText = "Stop";
-    playback = playRecordedNotes(recordedNotes);
-    await playback;
-    if (playing) {
-      playing = false;
-      document.getElementById('play').innerText = "Play";
-    }
-  } else {
-    playing = false;
-    document.getElementById('play').innerText = "Play";
-    stopPlayback = true;
-    if (playback) {
-      await playback;
-    }
+    playRecordedNotes(recordedNotes);
   }
 });
-
 
 
 
@@ -494,66 +474,48 @@ function getKeyCodeForFrequency(frequency) {
   return null;
 }
 
+async function playRecordedNotes(notes) {
+  const timeBetweenNotesMs = 50;
 
-function noteTypeToDurationMilliseconds(noteType, tempo) {
-  const quarterNoteDuration = (60 / tempo) * 1000;
-  
-  switch (noteType) {
-    case NOTE_THIRTY_SECOND:
-      return quarterNoteDuration / 8;
-    case NOTE_SIXTEENTH:
-      return quarterNoteDuration / 4;
-    case NOTE_EIGHTH:
-      return quarterNoteDuration / 2;
-    case NOTE_QUARTER:
-      return quarterNoteDuration;
-    case NOTE_HALF:
-      return quarterNoteDuration * 2;
-    case NOTE_WHOLE:
-      return quarterNoteDuration * 4;
-    default:
-      return 0;
-  }
-}
+  for (const note of notes) {
+    const noteLengthsMs = {
+      "NOTE_THIRTY_SECOND": 108,
+      "NOTE_SIXTEENTH": 216,
+      "NOTE_EIGHTH": 324,
+      "NOTE_QUARTER": 648,
+      "NOTE_HALF": 1296,
+      "NOTE_WHOLE": 2592,
+    };
 
-async function playRecordedNotes(notes, tempo) {
-  for (const notePair of notes) {
-    if (stopPlayback) {
-      stopPlayback = false;
-      break;
-    }
-    const frequency = notePair[0];
-    const noteType = notePair[1];
-    const durationMilliseconds = noteTypeToDurationMilliseconds(noteType, tempo);
+    console.log('Playing note:', note); // Debug: log the current note
 
-    if (frequency === 0) {
-      await new Promise(resolve => setTimeout(resolve, durationMilliseconds));
+    if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
+      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
     } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(frequency)}"]`);
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
 
       if (!keyElement) {
-        console.error('Could not find key element for note:', frequency);
+        console.error('Could not find key element for note:', note);
         continue;
       }
 
-      const oscillator = playNote(frequency, keyElement);
+      const oscillator = playNote(note.frequency, keyElement);
 
       // Stop the oscillator after the note duration and wait for it
       await new Promise(resolve => setTimeout(() => {
+        console.log('Stopping note:', note); // Debug: log the note being stopped
         oscillator.stop();
         keyElement.classList.remove("pressed");
         resolve();
-      }, durationMilliseconds));
+      }, note.duration));
+
+      // Wait for the time delay before proceeding to the next note
+      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`); // Debug: log the time between notes
+      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
     }
   }
 }
-
-
-
-
-
-
-
 
 
 
