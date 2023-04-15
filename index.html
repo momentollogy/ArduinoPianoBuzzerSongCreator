@@ -489,16 +489,16 @@ async function playRecordedNotes(notes) {
 
     console.log('Playing note:', note); // Debug: log the current note
 
-    if (note.rest) {
-      console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
-      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
-    } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-
-      if (!keyElement) {
-        console.error('Could not find key element for note:', note);
-        continue;
-      }
+   // if (note.rest) {
+   //   console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
+   //   await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+   // } else {
+   //   const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+//
+ //     if (!keyElement) {
+  //      console.error('Could not find key element for note:', note);
+   //     continue;
+   //   }
 
       const oscillator = playNote(note.frequency, keyElement);
 
