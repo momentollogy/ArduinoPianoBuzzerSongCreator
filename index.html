@@ -179,14 +179,14 @@ function mapDurationToNoteLength(duration, isRest) {
     2592: "NOTE_WHOLE",
   };
 
-  if (!isRest) {
-    if (sliderValue >= 0.5) {
-      delete noteLengths[108]; // Remove 32nd notes based on the slider value
-    }
-    if (sliderValue >= 1) {
-      delete noteLengths[216]; // Remove 16th notes based on the slider value
-    }
-  }
+//  if (!isRest) {
+//    if (sliderValue >= 0.5) {
+//      delete noteLengths[108]; // Remove 32nd notes based on the slider value
+//    }
+//    if (sliderValue >= 1) {
+//      delete noteLengths[216]; // Remove 16th notes based on the slider value
+//    }
+//  }
 
   let closestDuration = Object.keys(noteLengths).reduce((prev, curr) => {
     return Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev;
@@ -489,16 +489,16 @@ async function playRecordedNotes(notes) {
 
     console.log('Playing note:', note); // Debug: log the current note
 
-   // if (note.rest) {
-   //   console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
-   //   await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
-   // } else {
-   //   const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-//
- //     if (!keyElement) {
-  //      console.error('Could not find key element for note:', note);
-   //     continue;
-   //   }
+    if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
+      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
+    } else {
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+
+      if (!keyElement) {
+        console.error('Could not find key element for note:', note);
+        continue;
+      }
 
       const oscillator = playNote(note.frequency, keyElement);
 
