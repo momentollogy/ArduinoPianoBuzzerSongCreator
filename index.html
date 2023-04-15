@@ -179,14 +179,14 @@ function mapDurationToNoteLength(duration, isRest) {
     2592: "NOTE_WHOLE",
   };
 
-//  if (!isRest) {
-//    if (sliderValue >= 0.5) {
-//      delete noteLengths[108]; // Remove 32nd notes based on the slider value
-//    }
-//    if (sliderValue >= 1) {
-//      delete noteLengths[216]; // Remove 16th notes based on the slider value
-//    }
-//  }
+  if (!isRest) {
+    if (sliderValue >= 0.5) {
+      delete noteLengths[108]; // Remove 32nd notes based on the slider value
+    }
+    if (sliderValue >= 1) {
+      delete noteLengths[216]; // Remove 16th notes based on the slider value
+    }
+  }
 
   let closestDuration = Object.keys(noteLengths).reduce((prev, curr) => {
     return Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev;
