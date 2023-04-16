@@ -5,71 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arduino Piano Buzzer Song Creator</title>
   <style>
-    body {
-    font-family: Arial, sans-serif;
-    }
-    .white {
-    display: inline-block;
-    background-color: white;
-    border: 1px solid black;
-    height: 150px;
-    width: 50px;
-    text-align: center;
-    line-height: 150px;
-    font-weight: bold;
-    cursor: pointer;
-    }
-    .black {
-    display: inline-block;
-    background-color: black;
-    border: 1px solid black;
-    height: 100px;
-    width: 30px;
-    margin-left: -20px;
-    margin-right: -20px;
-    z-index: 1;
-    text-align: center;
-    line-height: 100px;
-    font-weight: bold;
-    cursor: pointer;
-    }
-    .white.pressed {
-    background-color: #ccc;
-    }
-    .black.pressed {
-    background-color: #333;
-    }
+   body {
+  font-family: Arial, sans-serif;
+}
+.white {
+  display: inline-block;
+  background-color: white;
+  border: 1px solid black;
+  height: 150px;
+  width: 50px;
+  text-align: center;
+  line-height: 150px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.black {
+  display: inline-block;
+  background-color: black;
+  border: 1px solid black;
+  height: 100px;
+  width: 30px;
+  margin-left: -20px;
+  margin-right: -20px;
+  z-index: 1;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  line-height:150px; /* Adjust this value */
+
+}
+
+.black::before {
+  content: attr(data-key);
+  position: absolute;
+  top: 40%;  /* Adjust this value to move black key text up or down */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 8px; /*black keys */
+}
+
+
+.white.pressed {
+  background-color: #ccc;
+}
+.black.pressed {
+  background-color: #333;
+}
 
   </style>
 </head>
 <body>
   <h1>Arduino Piano Buzzer Song Creator V1 <br> <small>by momentollogy</small><br></h1>
   <div id="piano">
+    <div class="key white" data-note="192">`</div>
+    <div class="key black" data-note="49" data-key="1">1</div>
+    <div class="key white" data-note="81">Q</div>
     <div class="key white" data-note="65">A</div>
-    <div class="key black" data-note="87">W</div>
+    <div class="key black" data-note="87" data-key="W">W</div>
     <div class="key white" data-note="83">S</div>
-    <div class="key black" data-note="69">E</div>
+    <div class="key black" data-note="69" data-key="E">E</div>
     <div class="key white" data-note="68">D</div>
     <div class="key white" data-note="70">F</div>
-    <div class="key black" data-note="84">T</div>
+    <div class="key black" data-note="84" data-key="T">T</div>
     <div class="key white" data-note="71">G</div>
-    <div class="key black" data-note="89">Y</div>
+    <div class="key black" data-note="89" data-key="Y">Y</div>
     <div class="key white" data-note="72">H</div>
-    <div class="key black" data-note="85">U</div>
+    <div class="key black" data-note="85" data-key="U">U</div>
     <div class="key white" data-note="74">J</div>
     <div class="key white" data-note="75">K</div>
-    <div class="key black" data-note="79">O</div>
+    <div class="key black" data-note="79" data-key="O">O</div>
     <div class="key white" data-note="76">L</div>
-    <div class="key black" data-note="80">P</div>
+    <div class="key black" data-note="80" data-key="P">P</div>
     <div class="key white" data-note="59">;</div>
     <div class="key white" data-note="222">'</div>
   </div>
   
 
-<!-- ... existing HTML code ... -->
-<div id="piano">
-    <!-- ... piano keys ... -->
-  </div>
+
+  
 
 
   <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" />
@@ -79,7 +94,21 @@
   <button id="play" onclick="playSongArray()">Play</button>
 
 
-  <input type="range" min="0" max="1" step="0.01" value="0.5" id="slider" oninput="updateSliderValue(this.value)">
+<!-- SLIDER BUTTON -->
+  <input type="range" min="0" max="2" step="1" value="0" id="slider" oninput="updateSliderValue(this.value)"
+  title=
+"SLIDER FUNCTION
+
+Left (Use for faster songs) = Notes Durations will max at 32nd notes. 
+
+Middle (Use for medium songs) = Notes Durations will max at 16th notes. 
+  
+Right (Use for slower songs) = Notes Durations will max at 8th notes.
+
+
+(Rests; defined by “0” are not affected by the Slider) 
+"
+  >
 
 
   <label for="metronome-bpm">Metronome BPM: </label>
@@ -88,35 +117,42 @@
 <button id="stop-metronome">Stop</button>
 
   <div id="recording"></div>
-  <!-- ... existing script tag ... -->
 
   <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
 
+  <br> <br> <br> <br>
 
   <div>
-    <a href="https://www.youtube.com/watch?v=-HBDiNoQkAw">Watch Tutorial</a>
+    <a href="https://www.youtube.com/watch?v=-HBDiNoQkAw" target="_blank">Watch Tutorial</a>
   </div>
-
+  
   <br>
-
-
-  <a href="https://drive.google.com/file/d/1yrtmyYl0rtv1ygd7zXIvFQ-BlhMG3M76/view?usp=share_link" download>
+  
+  <a href="https://drive.google.com/file/d/1yrtmyYl0rtv1ygd7zXIvFQ-BlhMG3M76/view?usp=share_link" download target="_blank">
     Download Arduino IDE Code
   </a>
-</p>
-
-<a href="https://drive.google.com/file/d/1SWQt95t4wXOxO6g63XlXmQHOSjGSYQOA/view?usp=share_link" download>
+  </p>
+  
+  <a href="https://drive.google.com/file/d/1SWQt95t4wXOxO6g63XlXmQHOSjGSYQOA/view?usp=share_link" download target="_blank">
     Download HTML/JAVA
   </a>
-</p>
+  </p>
+  
+<!-- LOAD ARRAY TEXTAREA UI -->
+  <div style="position: absolute; right: 0px; top: 116px; padding-right: 30px;">
+    <textarea id="songInput" placeholder="Paste song array" style="width: 300px; height: 145px;
+     overflow: auto; text-align: center;"></textarea>
+    <br>
+    <button id="loadSongButton" onclick="loadSongFromInput()">Load Song</button>
+    <button onclick="window.open('https://docs.google.com/spreadsheets/d/1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg/edit#gid=0', '_blank');">Browse/Save To Library</button>
+    <button id="clearArray" onclick="clearSongArray()">Clear</button>
+  </div>
+  
+  
+
+
 
   <script>
-
-let sliderValue = 0.5;
-
-function updateSliderValue(value) {
-  sliderValue = parseFloat(value);
-}
 
 
    // Create a Web Audio API context
@@ -124,6 +160,9 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 // Frequencies for the piano keys (C4 to C5)
 const frequencies = {
+  192: 220.00, // ` (next to the 1 key)
+  49: 233.08, // 1
+  81: 246.94, // Q
   65: 261.63, // A
   87: 277.18, // W
   83: 293.66, // S
@@ -145,6 +184,9 @@ const frequencies = {
 };
 
 const noteNames = {
+  220.00: "NOTE_A3",
+  233.08: "NOTE_Bb3",
+  246.94: "NOTE_B3",
   261.63: "NOTE_C4",
   277.18: "NOTE_Cs4",
   293.66: "NOTE_D4",
@@ -165,8 +207,59 @@ const noteNames = {
   698.26: "NOTE_F5",
 };
 
+//THIS IS TO map the note names to the key codes for load button. 
+const noteToKeyCode = {
+  'NOTE_A3': 192,
+  'NOTE_Bb3': 49,
+  'NOTE_B3': 81,
+  'NOTE_C4': 65,
+  'NOTE_Cs4': 87,
+  'NOTE_D4': 83,
+  'NOTE_Ds4': 69,
+  'NOTE_E4': 68,
+  'NOTE_F4': 70,
+  'NOTE_Fs4': 84,
+  'NOTE_G4': 71,
+  'NOTE_Gs4': 89,
+  'NOTE_A4': 72,
+  'NOTE_As4': 85,
+  'NOTE_B4': 74,
+  'NOTE_C5': 75,
+  'NOTE_Cs5': 79,
+  'NOTE_D5': 76,
+  'NOTE_Ds5': 80,
+  'NOTE_E5': 59,
+  'NOTE_F5': 222,
+};
+
+//Makes blackkeynames work
+const keyNames = {
+  49: '1',
+  81: 'Q',
+  87: 'W',
+  69: 'E',
+  84: 'T',
+  89: 'Y',
+  85: 'U',
+  79: 'O',
+  80: 'P',
+};
+
+document.querySelectorAll('.key.black').forEach((key) => {
+  const keyCode = key.getAttribute('data-note');
+  key.innerText = keyNames[keyCode] || key.innerText;
+});
+
+
+
 
 let playingNotes = new Set();
+
+let sliderValue = 0.5;
+
+function updateSliderValue(value) {
+  sliderValue = parseFloat(value);
+}
 
 // Map DURATION TO NOTE LENGTH
 function mapDurationToNoteLength(duration, isRest) {
@@ -174,16 +267,18 @@ function mapDurationToNoteLength(duration, isRest) {
     108: "NOTE_THIRTY_SECOND",
     216: "NOTE_SIXTEENTH",
     324: "NOTE_EIGHTH",
+    486: "NOTE_DOTTED_EIGHTH",
     648: "NOTE_QUARTER",
+    972: "NOTE_DOTTED_QUARTER",
     1296: "NOTE_HALF",
     2592: "NOTE_WHOLE",
   };
 
   if (!isRest) {
-    if (sliderValue >= 0.5) {
+    if (sliderValue >= 1) {
       delete noteLengths[108]; // Remove 32nd notes based on the slider value
     }
-    if (sliderValue >= 1) {
+    if (sliderValue >= 2) {
       delete noteLengths[216]; // Remove 16th notes based on the slider value
     }
   }
@@ -265,7 +360,18 @@ document.getElementById('record').addEventListener('click', () => {
   recordingStartTime = null; // Reset the recordingStartTime
   document.getElementById('record').disabled = true;
   document.getElementById('stop').disabled = false;
+  
 });
+
+
+function stopPlayback() {
+  if (metronomeInterval) {
+    clearInterval(metronomeInterval);
+    metronomeInterval = null;
+  }
+  playing = false;
+}
+
 
 // Stop recording
 document.getElementById('stop').addEventListener('click', () => {
@@ -274,14 +380,40 @@ document.getElementById('stop').addEventListener('click', () => {
   document.getElementById('record').disabled = false;
   document.getElementById('stop').disabled = true;
   displayRecording();
-  stopMetronome(); // Add this line to stop the metronome when stopping the recording
+  stopMetronome(); // Stop the metronome when stopping the recording
+  
+  // Add these lines to stop playback when the "Stop" button is clicked and re-enable the "Play" button
+  if (!recording) {
+    stopPlayback();
+    document.getElementById('play').disabled = false;
+  }
 });
+
+
 
 //Clear button
 document.getElementById('clear').addEventListener('click', () => {
   recordedNotes = [];
   document.getElementById("recording").innerHTML = "";
 }); 
+
+
+
+// PLAY EVENT LISTENER
+let isPlaying = false;
+
+document.getElementById('play').addEventListener('click', async () => {
+  if (isPlaying) return;
+
+  isPlaying = true;
+  document.getElementById('stop').disabled = false;
+  await playRecordedNotes(recordedNotes).then(() => {
+    document.getElementById('stop').disabled = true;
+    isPlaying = false;
+  });
+});
+
+
 
 
 //PLAY AND RECORD FUNCTIONs
@@ -315,7 +447,6 @@ function playAndRecord(frequency, keyElement) {
         recordingNote = true;
     }
 }
-
 
 
 
@@ -391,6 +522,216 @@ function displayRecording() {
 
 
 
+
+function getKeyCodeForFrequency(frequency) {
+  for (const [keyCode, freq] of Object.entries(frequencies)) {
+    if (freq === frequency) {
+      return keyCode;
+    }
+  }
+  return null;
+}
+
+let playbackTimeouts = [];
+let playbackOscillators = [];
+
+
+
+const noteLengthsMs = {
+  "NOTE_THIRTY_SECOND": 108,
+  "NOTE_SIXTEENTH": 216,
+  "NOTE_EIGHTH": 324,
+  "NOTE_DOTTED_EIGHTH": 486, // Add the dotted eighth note duration
+  "NOTE_QUARTER": 648,
+  "NOTE_DOTTED_QUARTER": 972, // Add the dotted quarter note duration
+  "NOTE_HALF": 1296,
+  "NOTE_WHOLE": 2592,
+    };
+
+
+// PLAYRECORDED NOTES FUNCTION
+async function playRecordedNotes(notes) {
+  stopPlaybackRequested = false;
+  const timeBetweenNotesMs = 0;
+
+  // Disable the "Play" button while the song is playing
+  const playButton = document.getElementById('play');
+  playButton.disabled = true;
+
+  for (const note of notes) {
+    if (stopPlaybackRequested) {
+      break;
+    }
+
+    console.log('Playing note:', note);
+
+    if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`);
+      await new Promise(resolve => setTimeout(resolve, note.duration - 0 + timeBetweenNotesMs));
+    } else {
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+
+      console.log(`Key element for note ${note.frequency}:`, keyElement);
+
+      if (!keyElement) {
+        console.error('Could not find key element for note:', note);
+        continue;
+      }
+
+      const oscillator = playNote(note.frequency, keyElement);
+      playbackOscillators.push(oscillator);
+
+      console.log('Stopping note:', note);
+      await new Promise(resolve => {
+        const timeout = setTimeout(() => {
+          oscillator.stop();
+          keyElement.classList.remove("pressed");
+          resolve();
+        }, note.duration - 50);
+        playbackTimeouts.push(timeout);
+      });
+
+      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
+    }
+  }
+
+  // Re-enable the "Play" button when the song stops playing
+  playButton.disabled = false;
+}
+
+
+
+function stopPlayback() {
+  stopPlaybackRequested = true;
+
+  // Clear all timeouts
+  for (const timeout of playbackTimeouts) {
+    clearTimeout(timeout);
+  }
+
+  // Stop all oscillators
+  for (const oscillator of playbackOscillators) {
+    oscillator.stop();
+  }
+
+  // Reset arrays
+  playbackTimeouts = [];
+  playbackOscillators = [];
+}
+
+
+
+
+// LOAD SONG EVENT LISTENER
+document.getElementById('loadSongButton').addEventListener('click', loadSongFromInput);
+
+
+// LOAD SONG FUNCTION
+function loadSongFromInput() {
+  const songString = document.getElementById('songInput').value;
+  console.log('Song string:', songString);
+
+  const regex = /{([^}]+)}/g;
+  const rawSongData = songString.match(regex);
+
+  if (!rawSongData) {
+    alert('Invalid song format. Please make sure the input is correct.');
+    return;
+  }
+
+  const songArray = rawSongData.map((item) => {
+    const cleanedItem = item.replace(/[{}]/g, '');
+    const values = cleanedItem.split(',').map((val) => val.trim());
+    return [values[0], values[1]];
+  });
+
+  console.log('Song array:', songArray);
+
+  const loadedSong = songArray.map(([note, duration]) => {
+    const keyCode = noteToKeyCode[note];
+    const noteDuration = noteLengthsMs[duration];
+    return {
+      frequency: note === '0' ? 0 : frequencies[keyCode],
+      duration: noteDuration,
+      durationString: duration,
+      rest: note === '0',
+    };
+  });
+
+  console.log('Loaded song:', loadedSong);
+  displayLoadedSong(loadedSong);
+  recordedNotes = loadedSong; // Update the recordedNotes with the loaded song data
+}
+
+//CLEAR ARRAY
+function clearSongArray() {
+  document.getElementById('songInput').value = '';
+}
+
+
+
+//DISPLAY LOADED SONG FUNCTION
+function displayLoadedSong(songArray) {
+  let output = "";
+  const songTitle = document.getElementById("song-title").value;
+  const notesCount = songArray.length;
+
+  output += `${songTitle}[${notesCount}][2] =\n{\n`;
+
+  songArray.forEach((noteObject) => {
+    const note = noteObject.rest ? '0' : noteNames[noteObject.frequency];
+    const duration = noteObject.durationString; // Use the original duration string
+    output += `  {${note}, ${duration}},\n`;
+  });
+
+  output += "};";
+
+  const recordingElement = document.getElementById("recording");
+  recordingElement.innerHTML = `<button id="copy-song">Copy Song</button><pre>${output}</pre>`;
+
+  const copySongButton = document.getElementById("copy-song");
+  copySongButton.addEventListener("click", () => copySongToClipboard(output));
+}
+
+
+
+
+
+
+
+
+
+
+//QUANTIZE  STUFF
+function closestDuration(duration, supportedDurations) {
+  return supportedDurations.reduce((prev, curr) =>
+    Math.abs(curr - duration) < Math.abs(prev - duration) ? curr : prev
+  );
+}
+
+function quantizeNoteDuration(duration) {
+  const supportedDurations = [108, 216, 324, 486, 648, 972, 1296, 2592];
+  return closestDuration(duration, supportedDurations);
+}
+
+function quantizeRestDuration(duration) {
+  const supportedDurations = [108, 216, 324, 486, 648, 972, 1296, 2592];
+  return closestDuration(duration, supportedDurations);
+}
+
+// Example usage
+let noteDuration = 0.37; // Example note duration value
+let quantizedNoteDuration = quantizeNoteDuration(noteDuration);
+console.log(quantizedNoteDuration); // output: 324 (closest to an eighth note)
+
+let restDuration = 0.185; // Example rest duration value
+let quantizedRestDuration = quantizeRestDuration(restDuration);
+console.log(quantizedRestDuration); // output: 216 (closest to a sixteenth note)
+
+
+
+
 //METRONOME STUFF
 
 let metronomeInterval = null;
@@ -413,14 +754,19 @@ function createWhiteNoise() {
 
 function startMetronome(bpm) {
   const interval = 60 / bpm * 1000;
+
+  // Disable the "Start Metronome" button when the metronome starts
+  const startMetronomeButton = document.getElementById('start-metronome');
+  startMetronomeButton.disabled = true;
+
   metronomeInterval = setInterval(() => {
     const whiteNoiseSource = createWhiteNoise();
     const gainNode = audioContext.createGain();
-    gainNode.gain.value = 0.2; // Adjust the volume of the click sound
+    gainNode.gain.value = 0.2;
 
     const filterNode = audioContext.createBiquadFilter();
     filterNode.type = 'bandpass';
-    filterNode.frequency.value = 2000; // Adjust the pitch of the click sound
+    filterNode.frequency.value = 2000;
     filterNode.Q.value = 0.5;
 
     whiteNoiseSource.connect(gainNode);
@@ -439,6 +785,10 @@ function stopMetronome() {
     clearInterval(metronomeInterval);
     metronomeInterval = null;
   }
+
+  // Re-enable the "Start Metronome" button when the metronome stops
+  const startMetronomeButton = document.getElementById('start-metronome');
+  startMetronomeButton.disabled = false;
 }
 
 //METRONOME EVENT LISTENER
@@ -452,107 +802,7 @@ document.getElementById("stop-metronome").addEventListener("click", () => {
 });
 
 
-//PLAY EVENT LISTENER
-document.getElementById('play').addEventListener('click', () => {
-  if (!playing) {
-    playRecordedNotes(recordedNotes);
-  }
-});
 
-
-
-
-
-
-
-function getKeyCodeForFrequency(frequency) {
-  for (const [keyCode, freq] of Object.entries(frequencies)) {
-    if (freq === frequency) {
-      return keyCode;
-    }
-  }
-  return null;
-}
-
-async function playRecordedNotes(notes) {
-  const timeBetweenNotesMs = 50;
-
-  for (const note of notes) {
-    const noteLengthsMs = {
-      "NOTE_THIRTY_SECOND": 108,
-      "NOTE_SIXTEENTH": 216,
-      "NOTE_EIGHTH": 324,
-      "NOTE_QUARTER": 648,
-      "NOTE_HALF": 1296,
-      "NOTE_WHOLE": 2592,
-    };
-
-    console.log('Playing note:', note); // Debug: log the current note
-
-    if (note.rest) {
-      console.log(`Waiting (rest) for ${note.duration}ms`); // Debug: log the rest duration
-      await new Promise(resolve => setTimeout(resolve, note.duration + timeBetweenNotesMs));
-    } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-
-      if (!keyElement) {
-        console.error('Could not find key element for note:', note);
-        continue;
-      }
-
-      const oscillator = playNote(note.frequency, keyElement);
-
-      // Stop the oscillator after the note duration and wait for it
-      await new Promise(resolve => setTimeout(() => {
-        console.log('Stopping note:', note); // Debug: log the note being stopped
-        oscillator.stop();
-        keyElement.classList.remove("pressed");
-        resolve();
-      }, note.duration));
-
-      // Wait for the time delay before proceeding to the next note
-      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`); // Debug: log the time between notes
-      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
-    }
-  }
-}
-
-
-
-
-
-function quantize(value, step, precision) {
-  let decimalPlaces = Math.max(0, precision - Math.floor(Math.log10(step)));
-  let multiplier = Math.pow(10, decimalPlaces);
-  return Math.round(value / step * multiplier) / multiplier;
-}
-
-function quantizeNoteDuration(duration, step, precision) {
-  return quantize(duration, step, precision);
-}
-
-function quantizeRestDuration(duration, step, precision) {
-  return quantize(duration, step, precision);
-}
-
-let value = 10.4567;
-let step = 0.1;
-let precision = 3;
-let quantizedValue = quantize(value, step, precision);
-console.log(quantizedValue); // output: 10.5
-
-let noteDuration = 0.37; // Example note duration value
-let noteDurationStep = 1 / 16; // Quantize to 16th notes
-let noteDurationPrecision = 3;
-let quantizedNoteDuration = quantizeNoteDuration(noteDuration, noteDurationStep, noteDurationPrecision);
-console.log(quantizedNoteDuration); // output: 0.375
-
-let restDuration = 0.185; // Example rest duration value
-let thirtySecondNoteDuration = sixteenthNoteDuration / 2; // Calculate the duration of a 32nd note at 120 BPM
-let restDurationStep = thirtySecondNoteDuration; // Use the calculated duration as the quantization step
-let restDurationPrecision = 3;
-let quantizedRestDuration = quantizeRestDuration(restDuration, restDurationStep, restDurationPrecision);
-console.log(quantizedRestDuration); // output: 0.1875
 
 //COPYSONG TO CLIPBOARTD FUNCTION
 function copySongToClipboard(songString) {
@@ -564,6 +814,11 @@ function copySongToClipboard(songString) {
   document.body.removeChild(songElement);
   alert('Song copied to clipboard');
 }
+
+
+
+
+
 
   </script>
 </body>
