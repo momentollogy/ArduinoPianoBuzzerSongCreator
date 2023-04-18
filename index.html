@@ -54,6 +54,10 @@
   background-color: #333;
 }
 
+input[type=range] {
+  width: 6.6%; /* Adjusts the slider  width */
+}
+
   </style>
 </head>
 <body>
@@ -80,7 +84,7 @@
     <div class="key black" data-note="80" data-key="P">P</div>
     <div class="key white" data-note="59">;</div>
     <div class="key white" data-note="222">'</div>
-    <div class="key black" data-note="219" data-key="[">[</div>
+    <div class="key black" data-note="221" data-key="[">]</div>
     <div class="key white" data-note="220">\</div>
 
   </div>
@@ -89,7 +93,7 @@
 
   
 
-
+<!-- RECORD and PLAYBACK BUTTONS -->
   <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" />
   <button id="record">Record</button>
   <button id="stop" disabled>Stop</button>
@@ -98,33 +102,34 @@
 
 
 <!-- SLIDER BUTTON -->
+
   <input type="range" min="0" max="2" step="1" value="0" id="slider" oninput="updateSliderValue(this.value)"
   title=
 "SLIDER FUNCTION
 
-Left (Use for faster songs) = Notes Durations will max at 32nd notes. 
+Left = Shorts notes are 32nd notes. 
 
-Middle (Use for medium songs) = Notes Durations will max at 16th notes. 
+Middle = Shorts notes are 16th notes. 
   
-Right (Use for slower songs) = Notes Durations will max at 8th notes.
+Right = Shortest notes are 8th notes.
 
 
 (Rests; defined by “0” are not affected by the Slider) 
 "
   >
 
-
-  <label for="metronome-bpm">Metronome BPM: </label>
+<!-- METRONOME BUTTONS + post recording buttons -->
+<label for="metronome-bpm">Metronome BPM: </label>
 <input type="number" id="metronome-bpm" value="120" min="40" max="240" />
 <button id="start-metronome">Start</button>
 <button id="stop-metronome">Stop</button>
 
-  <div id="recording"></div>
-
-  <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
+ <div id="recording"></div>
+ <button id="copySongBtn" style="display: none;" onclick="copySongToClipboard(songString)">Copy Song</button>
 
   <br> <br> <br> <br>
 
+<!-- LINKS -->
   <div>
     <a href="https://www.youtube.com/watch?v=-HBDiNoQkAw" target="_blank">Watch Tutorial</a>
   </div>
@@ -142,8 +147,8 @@ Right (Use for slower songs) = Notes Durations will max at 8th notes.
   </p>
   
 <!-- LOAD ARRAY TEXTAREA UI -->
-  <div style="position: absolute; right: 0px; top: 116px; padding-right: 300px;">
-    <textarea id="songInput" placeholder="Paste song array" style="width: 300px; height: 145px;
+  <div style="position: absolute; right: 0px; top: 116px; padding-right: 500px;">
+    <textarea id="songInput" placeholder="Paste song array" style="width: 288px; height: 145px;
      overflow: auto; text-align: center;"></textarea>
     <br>
     <button id="loadSongButton" onclick="loadSongFromInput()">Load Song</button>
@@ -152,8 +157,6 @@ Right (Use for slower songs) = Notes Durations will max at 8th notes.
   </div>
   
   
-
-
 
   <script>
 
@@ -186,6 +189,7 @@ const frequencies = {
   222: 698.26, // ;
   221: 739.99, // ]
   220: 783.99, // \
+  
 
 };
 
@@ -267,7 +271,6 @@ document.querySelectorAll('.key.black').forEach((key) => {
 
 
 let playingNotes = new Set();
-
 let sliderValue = 0.5;
 
 function updateSliderValue(value) {
@@ -304,18 +307,6 @@ function mapDurationToNoteLength(duration, isRest) {
 }
 
 
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
 
 // Function to play a note
 function playNote(frequency, keyElement, onStop) {
@@ -346,6 +337,40 @@ function playNote(frequency, keyElement, onStop) {
   return oscillator;
 }
 
+
+//event listner for mouse click on keys
+const pianoKeys = document.querySelectorAll('.key');
+
+pianoKeys.forEach(key => {
+  key.addEventListener('mousedown', () => {
+    const keyCode = key.dataset.note;
+    if (!playingNotes.has(keyCode)) {
+      playingNotes.add(keyCode);
+      playAndRecord(frequencies[keyCode], key);
+    }
+  });
+
+  key.addEventListener('mousemove', (event) => {
+    if (event.buttons === 1) { // Check if the left mouse button is pressed
+      const keyCode = key.dataset.note;
+      if (!playingNotes.has(keyCode)) {
+        playingNotes.add(keyCode);
+        playAndRecord(frequencies[keyCode], key);
+      }
+    }
+  });
+
+  key.addEventListener('mouseleave', () => {
+    const keyCode = key.dataset.note;
+    if (playingNotes.has(keyCode)) {
+      playingNotes.delete(keyCode);
+      key.dispatchEvent(new MouseEvent('mouseup'));
+    }
+  });
+});
+
+
+
 //Funtion to add a rest
 function addRestIfNeeded() {
   if (recordedNotes.length > 1) {
@@ -369,13 +394,11 @@ let recordingStartTime;
 document.getElementById('record').addEventListener('click', () => {
   recording = true;
   startTime = Date.now();
-  recordedNotes = []; // Clear the recordedNotes array before starting a new recording
-  recordingStartTime = null; // Reset the recordingStartTime
+  recordedNotes = [];
+  recordingStartTime = null;
   document.getElementById('record').disabled = true;
   document.getElementById('stop').disabled = false;
-  
 });
-
 
 function stopPlayback() {
   if (metronomeInterval) {
@@ -385,7 +408,6 @@ function stopPlayback() {
   playing = false;
 }
 
-
 // Stop recording
 document.getElementById('stop').addEventListener('click', () => {
   recording = false;
@@ -393,9 +415,8 @@ document.getElementById('stop').addEventListener('click', () => {
   document.getElementById('record').disabled = false;
   document.getElementById('stop').disabled = true;
   displayRecording();
-  stopMetronome(); // Stop the metronome when stopping the recording
-  
-  // Add these lines to stop playback when the "Stop" button is clicked and re-enable the "Play" button
+  stopMetronome();
+
   if (!recording) {
     stopPlayback();
     document.getElementById('play').disabled = false;
@@ -403,16 +424,13 @@ document.getElementById('stop').addEventListener('click', () => {
 });
 
 
-
-//Clear button
+// Clear button
 document.getElementById('clear').addEventListener('click', () => {
   recordedNotes = [];
   document.getElementById("recording").innerHTML = "";
-}); 
+});
 
-
-
-// PLAY EVENT LISTENER
+// Play event listener
 let isPlaying = false;
 
 document.getElementById('play').addEventListener('click', async () => {
@@ -427,62 +445,46 @@ document.getElementById('play').addEventListener('click', async () => {
 });
 
 
-
-
-//PLAY AND RECORD FUNCTIONs
+// Play and record function
 function playAndRecord(frequency, keyElement) {
-    if (!recordingNote) {
-        playNote(frequency, keyElement, duration => {
-            recordingNote = false;
+  if (!recordingNote) {
+    playNote(frequency, keyElement, duration => {
+      recordingNote = false;
 
-            if (recording) {
-                if (!recordingStartTime) {
-                    recordingStartTime = new Date().getTime();
-                }
-                const restDuration = (new Date().getTime() - recordingStartTime) - duration;
-                if (restDuration > 0) {
-                    recordedNotes.push({
-                        rest: true,
-                        duration: restDuration
-                    });
-                    console.log("Rest added:", { rest: true, duration: restDuration }); // Add this line
-                }
-                recordedNotes.push({
-                    frequency: frequency,
-                    duration: duration,
-                    startTime: new Date().getTime() // Add this line
-                });
-                console.log("Note added:", { frequency: frequency, duration: duration, startTime: new Date().getTime() }); // Add this line
-                recordingStartTime = new Date().getTime();
-            }
+      if (recording) {
+        if (!recordingStartTime) {
+          recordingStartTime = new Date().getTime();
+        }
+        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
+        if (restDuration > 0) {
+          recordedNotes.push({ rest: true, duration: restDuration });
+        }
+        recordedNotes.push({
+          frequency: frequency,
+          duration: duration,
+          startTime: new Date().getTime()
         });
+        recordingStartTime = new Date().getTime();
+      }
+    });
 
-        recordingNote = true;
-    }
+    recordingNote = true;
+  }
 }
 
-
-
-//REST FUNCTION
+// Rest function
 function addRest() {
   if (recording) {
     const currentTime = new Date().getTime();
     const restDuration = currentTime - recordingStartTime;
-    if (restDuration >= 100) { // Minimum rest duration, you can adjust this value
-      recordedNotes.push({
-        rest: true,
-        duration: restDuration,
-      });
+    if (restDuration >= 100) {
+      recordedNotes.push({ rest: true, duration: restDuration });
     }
     recordingStartTime = currentTime;
   }
 }
 
-
-const keyCodes = {
-  "Semicolon": 59,
-  'Quote': 222, // "'"
-};
+const keyCodes = { "Semicolon": 59, 'Quote': 222 };
 
 document.addEventListener('keydown', event => {
   const keyCode = keyCodes[event.code] || event.keyCode;
@@ -505,11 +507,10 @@ document.addEventListener('keyup', event => {
 });
 
 
-// FUNCTION DISPLAYRECORDING
+
+// Display recording function
 function displayRecording() {
   let output = "";
-  let songArray = "";
-
   const songTitle = document.getElementById("song-title").value;
   const notesCount = recordedNotes.length;
 
@@ -524,7 +525,6 @@ function displayRecording() {
   });
 
   output += "};";
-  songArray = output;
 
   const recordingElement = document.getElementById("recording");
   recordingElement.innerHTML = `<button id="copy-song">Copy Song</button><pre>${output}</pre>`;
@@ -532,8 +532,6 @@ function displayRecording() {
   const copySongButton = document.getElementById("copy-song");
   copySongButton.addEventListener("click", () => copySongToClipboard(output));
 }
-
-
 
 
 function getKeyCodeForFrequency(frequency) {
@@ -709,13 +707,6 @@ function displayLoadedSong(songArray) {
 
 
 
-
-
-
-
-
-
-
 //QUANTIZE  STUFF
 function closestDuration(duration, supportedDurations) {
   return supportedDurations.reduce((prev, curr) =>
@@ -827,8 +818,6 @@ function copySongToClipboard(songString) {
   document.body.removeChild(songElement);
   alert('Song copied to clipboard');
 }
-
-
 
 
 
