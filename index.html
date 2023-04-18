@@ -80,6 +80,9 @@
     <div class="key black" data-note="80" data-key="P">P</div>
     <div class="key white" data-note="59">;</div>
     <div class="key white" data-note="222">'</div>
+    <div class="key black" data-note="219" data-key="[">[</div>
+    <div class="key white" data-note="220">\</div>
+
   </div>
   
 
@@ -181,6 +184,9 @@ const frequencies = {
   80: 622.25, // P
   59: 659.26, // ;
   222: 698.26, // ;
+  219: 739.99, // [
+  220: 783.99, // \
+
 };
 
 const noteNames = {
@@ -205,6 +211,9 @@ const noteNames = {
   622.25: "NOTE_Ds5",
   659.26: "NOTE_E5",
   698.26: "NOTE_F5",
+  739.99: "NOTE_Fs5",
+  783.99: "NOTE_G5",
+
 };
 
 //THIS IS TO map the note names to the key codes for load button. 
@@ -230,6 +239,9 @@ const noteToKeyCode = {
   'NOTE_Ds5': 80,
   'NOTE_E5': 59,
   'NOTE_F5': 222,
+  'NOTE_Fs5': 219,
+   'NOTE_G5': 220,
+
 };
 
 //Makes blackkeynames work
@@ -243,6 +255,7 @@ const keyNames = {
   85: 'U',
   79: 'O',
   80: 'P',
+  219: '[',
 };
 
 document.querySelectorAll('.key.black').forEach((key) => {
