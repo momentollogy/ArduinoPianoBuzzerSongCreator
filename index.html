@@ -105,14 +105,15 @@ input[type=range] {
 
   <input type="range" min="0" max="2" step="1" value="0" id="slider" oninput="updateSliderValue(this.value)"
   title=
-"SLIDER CONTROL
+"SLIDER CONTROL 
 
 The piano records various note durations (32nd, 16th, 8th, 4th, 1/2, and whole notes). 
-Use the slider to set note duration limits for more accurate Arduino playback.
+Use this quanization slider to set note duration limits for more accurate Arduino playback.
 
-For instance, while recording the Top Gun theme song (at 120 bpm) with full duration range, 
+For example, while recording the Top Gun theme song (at 120 bpm) using the full duration range, 
 some notes might be recorded as 32nd notes instead of 16th notes, causing the song to sound rushed. 
-Adjust the slider to limit 32nd or 16th notes for a more accurate melody. Rest durations are unaffected.
+Adjust the slider to limit 32nd or 16th notes for a more accurate melody when playing back on the arduino.
+*Rest durations are unaffected by the slider.
 
 Left (default): Full range of note durations.
 
@@ -273,7 +274,6 @@ document.querySelectorAll('.key.black').forEach((key) => {
 
 
 
-
 let playingNotes = new Set();
 let sliderValue = 0.5;
 
@@ -337,9 +337,146 @@ function playNote(frequency, keyElement, onStop) {
 
   keyElement.addEventListener('mouseup', handleMouseUp);
 
-  // Add the return statement here
   return oscillator;
 }
+
+
+let isPlaying = false;
+
+// Play event listener
+document.getElementById('play').addEventListener('click', async () => {
+  if (isPlaying) return;
+
+  isPlaying = true;
+  document.getElementById('stop').disabled = false;
+  await playRecordedNotes(recordedNotes).then(() => {
+    document.getElementById('stop').disabled = true;
+    isPlaying = false;
+  });
+});
+
+
+// Play and record function
+function playAndRecord(frequency, keyElement) {
+  if (!recordingNote) {
+    playNote(frequency, keyElement, duration => {
+      recordingNote = false;
+
+      if (recording) {
+        if (!recordingStartTime) {
+          recordingStartTime = new Date().getTime();
+        }
+        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
+        if (restDuration > 0) {
+          recordedNotes.push({ rest: true, duration: restDuration });
+        }
+        recordedNotes.push({
+          frequency: frequency,
+          duration: duration,
+          startTime: new Date().getTime()
+        });
+        recordingStartTime = new Date().getTime();
+      }
+    });
+
+    recordingNote = true;
+  }
+}
+
+
+// PLAYRECORDED NOTES FUNCTION
+async function playRecordedNotes(notes) {
+  stopPlaybackRequested = false;
+  const timeBetweenNotesMs = 0;
+
+  // Disable the "Play" button while the song is playing
+  const playButton = document.getElementById('play');
+  playButton.disabled = true;
+
+  for (const note of notes) {
+    if (stopPlaybackRequested) {
+      break;
+    }
+
+    console.log('Playing note:', note);
+
+    if (note.rest) {
+      console.log(`Waiting (rest) for ${note.duration}ms`);
+      await new Promise(resolve => setTimeout(resolve, note.duration - 0 + timeBetweenNotesMs));
+    } else {
+      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
+
+      console.log(`Key element for note ${note.frequency}:`, keyElement);
+
+      if (!keyElement) {
+        console.error('Could not find key element for note:', note);
+        continue;
+      }
+
+      const oscillator = playNote(note.frequency, keyElement, () => {
+        if (stopPlaybackRequested) {
+          oscillator.stop();
+        }
+      });
+      playbackOscillators.push(oscillator);
+
+      console.log('Stopping note:', note);
+      await new Promise(resolve => {
+        const timeout = setTimeout(() => {
+          if (!stopPlaybackRequested) {
+            oscillator.stop();
+            keyElement.classList.remove("pressed");
+          }
+          resolve();
+        }, note.duration - 50);
+        playbackTimeouts.push(timeout);
+      });
+
+      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
+    }
+  }
+
+  // Re-enable the "Play" button when the song stops playing
+  playButton.disabled = false;
+}
+
+
+function releaseAllKeys() {
+  const pianoKeys = document.querySelectorAll('.key.pressed');
+  pianoKeys.forEach(key => {
+    key.classList.remove('pressed');
+  });
+}
+
+function stopPlayback() {
+  stopPlaybackRequested = true;
+
+  // Clear all timeouts
+  for (const timeout of playbackTimeouts) {
+    clearTimeout(timeout);
+  }
+
+  // Stop all oscillators
+  for (const oscillator of playbackOscillators) {
+    oscillator.stop();
+  }
+
+  // Reset arrays
+  playbackTimeouts = [];
+  playbackOscillators = [];
+
+  isPlaying = false; // Add this line
+
+  // Release all pressed keys
+  releaseAllKeys();
+}
+
+
+
+
+
+
 
 
 //event listner for mouse click on keys
@@ -405,12 +542,25 @@ document.getElementById('record').addEventListener('click', () => {
 });
 
 function stopPlayback() {
-  if (metronomeInterval) {
-    clearInterval(metronomeInterval);
-    metronomeInterval = null;
+  stopPlaybackRequested = true;
+
+  // Clear all timeouts
+  for (const timeout of playbackTimeouts) {
+    clearTimeout(timeout);
   }
-  playing = false;
+
+  // Stop all oscillators
+  for (const oscillator of playbackOscillators) {
+    oscillator.stop();
+  }
+
+  // Reset arrays
+  playbackTimeouts = [];
+  playbackOscillators = [];
+
+  isPlaying = false; // Add this line
 }
+
 
 // Stop recording
 document.getElementById('stop').addEventListener('click', () => {
@@ -421,11 +571,14 @@ document.getElementById('stop').addEventListener('click', () => {
   displayRecording();
   stopMetronome();
 
-  if (!recording) {
+  // Call stopPlayback() if either recording or playing
+  if (recording || isPlaying) {
     stopPlayback();
     document.getElementById('play').disabled = false;
   }
 });
+
+
 
 
 // Clear button
@@ -434,47 +587,6 @@ document.getElementById('clear').addEventListener('click', () => {
   document.getElementById("recording").innerHTML = "";
 });
 
-// Play event listener
-let isPlaying = false;
-
-document.getElementById('play').addEventListener('click', async () => {
-  if (isPlaying) return;
-
-  isPlaying = true;
-  document.getElementById('stop').disabled = false;
-  await playRecordedNotes(recordedNotes).then(() => {
-    document.getElementById('stop').disabled = true;
-    isPlaying = false;
-  });
-});
-
-
-// Play and record function
-function playAndRecord(frequency, keyElement) {
-  if (!recordingNote) {
-    playNote(frequency, keyElement, duration => {
-      recordingNote = false;
-
-      if (recording) {
-        if (!recordingStartTime) {
-          recordingStartTime = new Date().getTime();
-        }
-        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
-        if (restDuration > 0) {
-          recordedNotes.push({ rest: true, duration: restDuration });
-        }
-        recordedNotes.push({
-          frequency: frequency,
-          duration: duration,
-          startTime: new Date().getTime()
-        });
-        recordingStartTime = new Date().getTime();
-      }
-    });
-
-    recordingNote = true;
-  }
-}
 
 // Rest function
 function addRest() {
@@ -509,7 +621,6 @@ document.addEventListener('keyup', event => {
     keyElement.dispatchEvent(new MouseEvent('mouseup'));
   }
 });
-
 
 
 // Display recording function
@@ -551,7 +662,6 @@ let playbackTimeouts = [];
 let playbackOscillators = [];
 
 
-
 const noteLengthsMs = {
   "NOTE_THIRTY_SECOND": 108,
   "NOTE_SIXTEENTH": 216,
@@ -564,76 +674,6 @@ const noteLengthsMs = {
     };
 
 
-// PLAYRECORDED NOTES FUNCTION
-async function playRecordedNotes(notes) {
-  stopPlaybackRequested = false;
-  const timeBetweenNotesMs = 0;
-
-  // Disable the "Play" button while the song is playing
-  const playButton = document.getElementById('play');
-  playButton.disabled = true;
-
-  for (const note of notes) {
-    if (stopPlaybackRequested) {
-      break;
-    }
-
-    console.log('Playing note:', note);
-
-    if (note.rest) {
-      console.log(`Waiting (rest) for ${note.duration}ms`);
-      await new Promise(resolve => setTimeout(resolve, note.duration - 0 + timeBetweenNotesMs));
-    } else {
-      const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-
-      console.log(`Key element for note ${note.frequency}:`, keyElement);
-
-      if (!keyElement) {
-        console.error('Could not find key element for note:', note);
-        continue;
-      }
-
-      const oscillator = playNote(note.frequency, keyElement);
-      playbackOscillators.push(oscillator);
-
-      console.log('Stopping note:', note);
-      await new Promise(resolve => {
-        const timeout = setTimeout(() => {
-          oscillator.stop();
-          keyElement.classList.remove("pressed");
-          resolve();
-        }, note.duration - 50);
-        playbackTimeouts.push(timeout);
-      });
-
-      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`);
-      await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
-    }
-  }
-
-  // Re-enable the "Play" button when the song stops playing
-  playButton.disabled = false;
-}
-
-
-
-function stopPlayback() {
-  stopPlaybackRequested = true;
-
-  // Clear all timeouts
-  for (const timeout of playbackTimeouts) {
-    clearTimeout(timeout);
-  }
-
-  // Stop all oscillators
-  for (const oscillator of playbackOscillators) {
-    oscillator.stop();
-  }
-
-  // Reset arrays
-  playbackTimeouts = [];
-  playbackOscillators = [];
-}
 
 
 
