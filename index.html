@@ -105,16 +105,20 @@ input[type=range] {
 
   <input type="range" min="0" max="2" step="1" value="0" id="slider" oninput="updateSliderValue(this.value)"
   title=
-"SLIDER FUNCTION
+"SLIDER CONTROL
 
-Left = Shorts notes are 32nd notes. 
+The piano records various note durations (32nd, 16th, 8th, 4th, 1/2, and whole notes). 
+Use the slider to set note duration limits for more accurate Arduino playback.
 
-Middle = Shorts notes are 16th notes. 
-  
-Right = Shortest notes are 8th notes.
+For instance, while recording the Top Gun theme song (at 120 bpm) with full duration range, 
+some notes might be recorded as 32nd notes instead of 16th notes, causing the song to sound rushed. 
+Adjust the slider to limit 32nd or 16th notes for a more accurate melody. Rest durations are unaffected.
 
+Left (default): Full range of note durations.
 
-(Rests; defined by “0” are not affected by the Slider) 
+Middle: Excludes 32nd notes (only 16th and longer).
+
+Right: Excludes 32nd and 16th (Only 8th notes and longer. 
 "
   >
 
