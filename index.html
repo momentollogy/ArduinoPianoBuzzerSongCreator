@@ -101,7 +101,7 @@ input[type=range] {
   <button id="play" onclick="playSongArray()">Play</button>
     
   <label for="playback-tempo">Playback Tempo:</label>
-<input type="number" id="playback-tempo" name="playback-tempo" min="40" max="240" value="92" step="1">
+<input type="number" id="playback-tempo" name="playback-tempo" min="40" max="240" value="100" step="1">
 
 
 
@@ -405,7 +405,7 @@ async function playRecordedNotes(notes) {
   const timeBetweenNotesMs = 0;
   const playbackTempo = parseInt(document.getElementById("playback-tempo").value);
 
-  const tempoFactor = 92.6 / playbackTempo; // Calculate the tempo factor based on the default BPM (92.6) and the playback tempo
+  const tempoFactor = 100 / playbackTempo; // Calculate the tempo factor based on the default BPM (92.6) and the playback tempo
 
   // Disable the "Play" button while the song is playing
   const playButton = document.getElementById('play');
