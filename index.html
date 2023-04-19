@@ -94,36 +94,40 @@ input[type=range] {
   
 
 <!-- RECORD and PLAYBACK BUTTONS -->
-  <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" />
+ <!--  <input type="text" id="song-title" placeholder="Enter song title" value="int Untitled_Song_1" /> -->
   <button id="record">Record</button>
   <button id="stop" disabled>Stop</button>
   <button id="clear">Clear</button>
   <button id="play" onclick="playSongArray()">Play</button>
     
   <label for="playback-tempo">Playback Tempo:</label>
-<input type="number" id="playback-tempo" name="playback-tempo" min="40" max="240" value="100" step="1">
+<input type="number" id="playback-tempo" name="playback-tempo" min="40" max="240" value="92" step="1">
 
 
 
 <!-- SLIDER BUTTON -->
 
-  <input type="range" min="0" max="2" step="1" value="0" id="slider" oninput="updateSliderValue(this.value)"
+  <input type="range" min="0" max="2" step="1" value="0" id="slider"  style="width: 82px;"oninput="updateSliderValue(this.value)"
   title=
 "SLIDER CONTROL 
 
 The piano records various note durations (32nd, 16th, 8th, 4th, 1/2, and whole notes). 
-Use this quanization slider to set note duration limits for more accurate Arduino playback.
-
-For example, while recording the Top Gun theme song (at 120 bpm) using the full duration range, 
-some notes might be recorded as 32nd notes instead of 16th notes, causing the song to sound rushed. 
-Adjust the slider to limit 32nd or 16th notes for a more accurate melody when playing back on the arduino.
-*Rest durations are unaffected by the slider.
+Use this custom quanization slider to set note duration limits while recording for a more accurate 
+representation of songs with perhaps slower tempos.
 
 Left (default): Full range of note durations.
 
 Middle: Excludes 32nd notes (only 16th and longer).
 
 Right: Excludes 32nd and 16th (Only 8th notes and longer. 
+
+For example, let's say you record the Top Gun theme song (to a 120 metronome bpm) using all the available note durations, 
+some notes might be recorded as 32nd notes causing the song to sound rushed in parts when it fact they might sound better as 16th notes.
+Adjust the slider to limit 32nd or 16th notes to help get certain songs sound more accurate to the performance.
+
+* Rest durations are unaffected by the slider.
+
+
 "
   >
 
@@ -156,7 +160,7 @@ Right: Excludes 32nd and 16th (Only 8th notes and longer.
   </p>
   
 <!-- LOAD ARRAY TEXTAREA UI -->
-  <div style="position: absolute; right: 0px; top: 116px; padding-right: 200px;">
+  <div style="position: absolute; right: 0px; top: 116px; padding-right: 500px;">
     <textarea id="songInput" placeholder="Paste song array" style="width: 288px; height: 145px;
      overflow: auto; text-align: center;"></textarea>
     <br>
@@ -404,8 +408,7 @@ async function playRecordedNotes(notes) {
   stopPlaybackRequested = false;
   const timeBetweenNotesMs = 0;
   const playbackTempo = parseInt(document.getElementById("playback-tempo").value);
-
-  const tempoFactor = 100 / playbackTempo; // Calculate the tempo factor based on the default BPM (92.6) and the playback tempo
+  const tempoFactor = 92.6 / playbackTempo; // Calculate the tempo factor based on the default BPM (92.6) and the playback tempo
 
   // Disable the "Play" button while the song is playing
   const playButton = document.getElementById('play');
@@ -417,7 +420,8 @@ async function playRecordedNotes(notes) {
     }
 
     if (note.rest) {
-      await new Promise(resolve => setTimeout(resolve, note.duration * tempoFactor + timeBetweenNotesMs));
+      const restDurationMs = noteLengthsMs[mapDurationToNoteLength(note.duration, true)];
+      await new Promise(resolve => setTimeout(resolve, restDurationMs * tempoFactor + timeBetweenNotesMs));
     } else {
       const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
 
@@ -433,6 +437,7 @@ async function playRecordedNotes(notes) {
       });
       playbackOscillators.push(oscillator);
 
+      const noteDurationMs = noteLengthsMs[mapDurationToNoteLength(note.duration, false)];
       await new Promise(resolve => {
         const timeout = setTimeout(() => {
           if (!stopPlaybackRequested) {
@@ -440,7 +445,7 @@ async function playRecordedNotes(notes) {
             keyElement.classList.remove("pressed");
           }
           resolve();
-        }, note.duration * tempoFactor - 50);
+        }, noteDurationMs * tempoFactor - 50);
         playbackTimeouts.push(timeout);
       });
 
