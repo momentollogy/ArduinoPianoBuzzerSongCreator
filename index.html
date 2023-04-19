@@ -99,6 +99,10 @@ input[type=range] {
   <button id="stop" disabled>Stop</button>
   <button id="clear">Clear</button>
   <button id="play" onclick="playSongArray()">Play</button>
+    
+  <label for="playback-tempo">Playback Tempo:</label>
+<input type="number" id="playback-tempo" name="playback-tempo" min="40" max="240" value="92" step="1">
+
 
 
 <!-- SLIDER BUTTON -->
@@ -356,38 +360,52 @@ document.getElementById('play').addEventListener('click', async () => {
 });
 
 
+
+let currentOscillator = null; // Add this line
+
 // Play and record function
 function playAndRecord(frequency, keyElement) {
-  if (!recordingNote) {
-    playNote(frequency, keyElement, duration => {
-      recordingNote = false;
-
-      if (recording) {
-        if (!recordingStartTime) {
-          recordingStartTime = new Date().getTime();
-        }
-        const restDuration = (new Date().getTime() - recordingStartTime) - duration;
-        if (restDuration > 0) {
-          recordedNotes.push({ rest: true, duration: restDuration });
-        }
-        recordedNotes.push({
-          frequency: frequency,
-          duration: duration,
-          startTime: new Date().getTime()
-        });
+  const playAndRecordCallback = (duration) => {
+    recordingNote = false;
+    if (recording) {
+      if (!recordingStartTime) {
         recordingStartTime = new Date().getTime();
       }
-    });
+      const restDuration = (new Date().getTime() - recordingStartTime) - duration;
+      if (restDuration > 0) {
+        recordedNotes.push({ rest: true, duration: restDuration });
+      }
+      recordedNotes.push({
+        frequency: frequency,
+        duration: duration,
+        startTime: new Date().getTime()
+      });
+      recordingStartTime = new Date().getTime();
+    }
+  };
 
-    recordingNote = true;
+  if (recordingNote) {
+    const currentKeyCode = Array.from(playingNotes)[0];
+    const currentKeyElement = document.querySelector(`.key[data-note="${currentKeyCode}"]`);
+    if (currentKeyElement) {
+      currentKeyElement.dispatchEvent(new MouseEvent('mouseup'));
+    }
   }
+
+  playNote(frequency, keyElement, playAndRecordCallback);
+  recordingNote = true;
 }
+
+
 
 
 // PLAYRECORDED NOTES FUNCTION
 async function playRecordedNotes(notes) {
   stopPlaybackRequested = false;
   const timeBetweenNotesMs = 0;
+  const playbackTempo = parseInt(document.getElementById("playback-tempo").value);
+
+  const tempoFactor = 92.6 / playbackTempo; // Calculate the tempo factor based on the default BPM (92.6) and the playback tempo
 
   // Disable the "Play" button while the song is playing
   const playButton = document.getElementById('play');
@@ -398,15 +416,10 @@ async function playRecordedNotes(notes) {
       break;
     }
 
-    console.log('Playing note:', note);
-
     if (note.rest) {
-      console.log(`Waiting (rest) for ${note.duration}ms`);
-      await new Promise(resolve => setTimeout(resolve, note.duration - 0 + timeBetweenNotesMs));
+      await new Promise(resolve => setTimeout(resolve, note.duration * tempoFactor + timeBetweenNotesMs));
     } else {
       const keyElement = document.querySelector(`.key[data-note="${getKeyCodeForFrequency(note.frequency)}"]`);
-
-      console.log(`Key element for note ${note.frequency}:`, keyElement);
 
       if (!keyElement) {
         console.error('Could not find key element for note:', note);
@@ -420,7 +433,6 @@ async function playRecordedNotes(notes) {
       });
       playbackOscillators.push(oscillator);
 
-      console.log('Stopping note:', note);
       await new Promise(resolve => {
         const timeout = setTimeout(() => {
           if (!stopPlaybackRequested) {
@@ -428,11 +440,10 @@ async function playRecordedNotes(notes) {
             keyElement.classList.remove("pressed");
           }
           resolve();
-        }, note.duration - 50);
+        }, note.duration * tempoFactor - 50);
         playbackTimeouts.push(timeout);
       });
 
-      console.log(`Waiting (between notes) for ${timeBetweenNotesMs}ms`);
       await new Promise(resolve => setTimeout(resolve, timeBetweenNotesMs));
     }
   }
@@ -440,6 +451,10 @@ async function playRecordedNotes(notes) {
   // Re-enable the "Play" button when the song stops playing
   playButton.disabled = false;
 }
+
+
+
+
 
 
 function releaseAllKeys() {
@@ -471,12 +486,6 @@ function stopPlayback() {
   // Release all pressed keys
   releaseAllKeys();
 }
-
-
-
-
-
-
 
 
 //event listner for mouse click on keys
@@ -666,12 +675,12 @@ const noteLengthsMs = {
   "NOTE_THIRTY_SECOND": 108,
   "NOTE_SIXTEENTH": 216,
   "NOTE_EIGHTH": 324,
-  "NOTE_DOTTED_EIGHTH": 486, // Add the dotted eighth note duration
+  "NOTE_DOTTED_EIGHTH": 486,
   "NOTE_QUARTER": 648,
-  "NOTE_DOTTED_QUARTER": 972, // Add the dotted quarter note duration
+  "NOTE_DOTTED_QUARTER": 972,
   "NOTE_HALF": 1296,
   "NOTE_WHOLE": 2592,
-    };
+};
 
 
 
