@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="favicon.png">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arduino Pianoa Buzzer Song Creator V1 (Beta)</title>
+  <title>Arduino Piano Buzzer Song Creator</title>
   <style>
    body {
   font-family: Arial, sans-serif;
@@ -60,10 +58,45 @@ input[type=range] {
   width: 6.6%; /* Adjusts the slider  width */
 }
 
+
+#slider-container {
+  position: relative;
+  display: inline-block;
+}
+
+#slider-container:hover::after {
+    content: "SLIDER CONTROL \A \A Use the quantization slider to remove certain note durations while recording. \A \A Left (default): Full range of note durations. (32nd, 16th, 8th, 4th, 1/2, and whole notes) \A \A Middle: Excludes 32nd notes (longest note duration is a 16th). \A \A Right: Excludes 32nd and 16th (longest note duration is an 8th note). \A \A Typically stay on the default but if your song plays back too fast in parts, try removing the faster notes for better playback. \A \A * Rest durations are unaffected by the slider. \A \A  Watch tutorial for detailed explanation.";
+
+  display: block;
+  position: absolute;
+  bottom: -280px;
+  left: 0;
+  width: 300px;
+  background-color: white;
+  color: black;
+  text-align: left;
+  border: 1px solid #aaa;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  width: 670%; /* Change this to 100% */
+  max-width: 475px; /* Add this line */
+  z-index: 1000;
+}
+
+#slider-container:not(:hover)::after {
+  content: "";
+}
+
+
+
+
+
   </style>
 </head>
 <body>
-  <h1>Arduino Piano Buzzer Song Creator V1 (beta) <br> <small>by momentollogy</small><br></h1>
+  <h1>Arduino Piano Buzzer Song Creator V1 <br> <small>by momentollogy</small><br></h1>
   <div id="piano">
     <div class="key white" data-note="192">`</div>
     <div class="key black" data-note="49" data-key="1">1</div>
@@ -108,30 +141,9 @@ input[type=range] {
 
 
 <!-- SLIDER BUTTON -->
-
-  <input type="range" min="0" max="2" step="1" value="0" id="slider"  style="width: 82.4px;"oninput="updateSliderValue(this.value)"
-  title=
-"SLIDER CONTROL 
-
-The piano records various note durations (32nd, 16th, 8th, 4th, 1/2, and whole notes). 
-Use this custom quanization slider to set note duration limits while recording for a more accurate 
-representation of songs with perhaps slower tempos.
-
-Left (default): Full range of note durations.
-
-Middle: Excludes 32nd notes (only 16th and longer).
-
-Right: Excludes 32nd and 16th (Only 8th notes and longer. 
-
-For example, let's say you record the Top Gun theme song (to a 120 metronome bpm) using all the available note durations, 
-some notes might be recorded as 32nd notes causing the song to sound rushed in parts when it fact they might sound better as 16th notes.
-Adjust the slider to limit 32nd or 16th notes to help get certain songs sound more accurate to the performance.
-
-* Rest durations are unaffected by the slider.
-
-
-"
-  >
+<div id="slider-container">
+    <input type="range" min="0" max="2" step="1" value="0" id="slider" style="width: 82px;" oninput="updateSliderValue(this.value)">
+  </div>
 
 <!-- METRONOME BUTTONS + post recording buttons -->
 <label for="metronome-bpm">Metronome BPM: </label>
@@ -146,18 +158,18 @@ Adjust the slider to limit 32nd or 16th notes to help get certain songs sound mo
 
 <!-- LINKS -->
   <div>
-    <a href="https://youtu.be/O1d9LQ68KAs" target="_blank">Watch Tutorial</a>
+    <a href="https://www.youtube.com/watch?v=-HBDiNoQkAw" target="_blank">Watch Tutorial</a>
   </div>
   
   <br>
   
-  <a href="https://drive.google.com/file/d/1Gycz5vhUIJqdibvmw9tU5cdAB8g45iMc/view?usp=share_link" download target="_blank">
+  <a href="https://drive.google.com/file/d/1yrtmyYl0rtv1ygd7zXIvFQ-BlhMG3M76/view?usp=share_link" download target="_blank">
     Download Arduino IDE Code
   </a>
   </p>
   
- <!-- <a href="https://drive.google.com/file/d/1SWQt95t4wXOxO6g63XlXmQHOSjGSYQOA/view?usp=share_link" download target="_blank">
-    Download HTML/JAVA-->
+  <a href="https://drive.google.com/file/d/1SWQt95t4wXOxO6g63XlXmQHOSjGSYQOA/view?usp=share_link" download target="_blank">
+    Download HTML/JAVA
   </a>
   </p>
   
@@ -174,6 +186,13 @@ Adjust the slider to limit 32nd or 16th notes to help get certain songs sound mo
   
 
   <script>
+
+
+function updateSliderValue(value) {
+  sliderValue = parseInt(value);
+}
+
+
 
 
    // Create a Web Audio API context
