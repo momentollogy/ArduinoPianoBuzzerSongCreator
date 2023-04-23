@@ -219,7 +219,8 @@ input[type=range] {
 
 
 <!-- Mobile metronome drop-down menu -->
-<div class="metronome-dropdown-mobile">
+
+<div class="metronome-dropdown">
   <label for="metronome-mobile">Metronome:</label>
   <select id="metronome-mobile" name="metronome-mobile">
     <option value="40">40 BPM</option>
@@ -233,6 +234,8 @@ input[type=range] {
     <option value="200">200 BPM</option>
   </select>
 </div>
+<!-- End of mobile metronome drop-down menu -->
+
 <!-- End of mobile metronome drop-down menu -->
 
 
@@ -274,32 +277,37 @@ input[type=range] {
   <script>
 
 
-//lock screen
+
 <script>
+
+
+  //lock screen
   window.addEventListener('DOMContentLoaded', function () {
-    if (window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
-      window.screen.orientation.lock('landscape').catch(function (error) {
-        console.error('Screen orientation lock error:', error);
-      });
-    }
-  });
-</script>
+  if (window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+    window.screen.orientation.lock('landscape').catch(function (error) {
+      console.error('Screen orientation lock error:', error);
+    });
+  }
 
+  document.querySelectorAll('.key').forEach((key) => {
+    key.addEventListener('touchstart', (event) => {
+      event.preventDefault();
+      playNote(key.dataset.note);
+      key.classList.add('active');
+    });
 
-
-document.querySelectorAll('.key').forEach((key) => {
-  key.addEventListener('touchstart', (event) => {
-    event.preventDefault();
-    playNote(key.dataset.note);
-    key.classList.add('active');
-  });
-
-  key.addEventListener('touchend', (event) => {
-    event.preventDefault();
-    stopNote(key.dataset.note);
-    key.classList.remove('active');
+    key.addEventListener('touchend', (event) => {
+      event.preventDefault();
+      stopNote(key.dataset.note);
+      key.classList.remove('active');
+    });
   });
 });
+
+
+
+
+
 
 
 
