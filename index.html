@@ -274,6 +274,36 @@ input[type=range] {
   <script>
 
 
+//lock screen
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    if (window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+      window.screen.orientation.lock('landscape').catch(function (error) {
+        console.error('Screen orientation lock error:', error);
+      });
+    }
+  });
+</script>
+
+
+
+document.querySelectorAll('.key').forEach((key) => {
+  key.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    playNote(key.dataset.note);
+    key.classList.add('active');
+  });
+
+  key.addEventListener('touchend', (event) => {
+    event.preventDefault();
+    stopNote(key.dataset.note);
+    key.classList.remove('active');
+  });
+});
+
+
+
+
 function updateSliderValue(value) {
   sliderValue = parseInt(value);
 }
