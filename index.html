@@ -89,80 +89,34 @@ input[type=range] {
   content: "";
 }
 
-/* mobile.css */
-/* mobile.css */
-@media screen and (max-width: 767px) {
-  body {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
 
-  /* Container for the piano keys */
-  .piano {
-    position: relative;
-    overflow-x: scroll;
-    overflow-y: hidden;
-    flex-grow: 1;
-    white-space: nowrap;
+@media screen and (max-width: 768px) {
+  /* Add your styles for mobile screens here */
+  #piano {
+    transform: rotate(-90deg) translateY(-100%);
+    transform-origin: top left;
   }
-
-  /* Adjust the style of the white keys */
   .white-key {
-    width: 10%;
-    height: calc(100% - 60px);
+    width: 25px;
+    height: 140px;
     border: 1px solid #000;
     background-color: #fff;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
   }
-
+  
   /* Adjust the style of the black keys */
   .black-key {
-    width: 6%;
-    height: 60%;
+    width: 18px;
+    height: 90px;
     border: 1px solid #000;
     background-color: #000;
     box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
     z-index: 2;
   }
-
-  /* Hide the metronome UI */
-  .metronome {
-    display: none;
-  }
-
-  /* Show the metronome dropdown */
-  .metronome-dropdown {
-    display: block;
-  }
-
-  /* Adjust the size and position of the record button */
-  .record {
-    position: absolute;
-    bottom: 10px;
-    left: 20px;
-    width: 40px;
-    height: 40px;
-  }
-
-  /* Adjust the size and position of the stop button */
-  .stop {
-    position: absolute;
-    bottom: 10px;
-    right: 20px;
-    width: 40px;
-    height: 40px;
-  }
-}
-
-
+}}
 
 
   </style>
-
-<link rel="stylesheet" href="mobile.css">
-
-
 </head>
 <body>
   <h1>Arduino Piano Buzzer Song Creator V1 <br> <small>by momentollogy</small><br></h1>
@@ -216,29 +170,6 @@ input[type=range] {
 
 <!-- METRONOME BUTTONS + post recording buttons -->
 <label for="metronome-bpm">Metronome BPM: </label>
-
-
-<!-- Mobile metronome drop-down menu -->
-
-<div class="metronome-dropdown">
-  <label for="metronome-mobile">Metronome:</label>
-  <select id="metronome-mobile" name="metronome-mobile">
-    <option value="40">40 BPM</option>
-    <option value="60">60 BPM</option>
-    <option value="80">80 BPM</option>
-    <option value="100">100 BPM</option>
-    <option value="120">120 BPM</option>
-    <option value="140">140 BPM</option>
-    <option value="160">160 BPM</option>
-    <option value="180">180 BPM</option>
-    <option value="200">200 BPM</option>
-  </select>
-</div>
-<!-- End of mobile metronome drop-down menu -->
-
-<!-- End of mobile metronome drop-down menu -->
-
-
 <input type="number" id="metronome-bpm" value="120" min="40" max="240" />
 <button id="start-metronome">Start</button>
 <button id="stop-metronome">Stop</button>
@@ -275,41 +206,6 @@ input[type=range] {
   
 
   <script>
-
-
-
-<script>
-
-
-  //lock screen
-  window.addEventListener('DOMContentLoaded', function () {
-  if (window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
-    window.screen.orientation.lock('landscape').catch(function (error) {
-      console.error('Screen orientation lock error:', error);
-    });
-  }
-
-  document.querySelectorAll('.key').forEach((key) => {
-    key.addEventListener('touchstart', (event) => {
-      event.preventDefault();
-      playNote(key.dataset.note);
-      key.classList.add('active');
-    });
-
-    key.addEventListener('touchend', (event) => {
-      event.preventDefault();
-      stopNote(key.dataset.note);
-      key.classList.remove('active');
-    });
-  });
-});
-
-
-
-
-
-
-
 
 
 function updateSliderValue(value) {
