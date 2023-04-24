@@ -1,0 +1,113 @@
+body {
+    font-family: Arial, sans-serif;
+}
+.white {
+    display: inline-block;
+    background-color: white;
+    border: 1px solid black;
+    height: 150px;
+    width: 50px;
+    text-align: center;
+    line-height: 150px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+.black {
+    display: inline-block;
+    background-color: black;
+    border: 1px solid black;
+    height: 100px;
+    width: 30px;
+    margin-left: -20px;
+    margin-right: -20px;
+    z-index: 1;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    position: relative;
+    line-height:150px; /* Adjust this value */
+    user-select: none;
+}
+
+.black::before {
+    content: attr(data-key);
+    position: absolute;
+    top: 40%;  /* Adjust this value to move black key text up or down */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 8px; /*black keys */
+    user-select: none;
+}
+
+
+.white.pressed {
+    background-color: #ccc;
+    user-select: none;
+}
+.black.pressed {
+    background-color: #333;
+    user-select: none;
+}
+
+input[type=range] {
+    width: 6.6%; /* Adjusts the slider  width */
+}
+
+
+#slider-container {
+    position: relative;
+    display: inline-block;
+}
+
+#slider-container:hover::after {
+    content: "SLIDER CONTROL \A \A Use the quantization slider to remove certain note durations while recording. \A \A Left (default): Full range of note durations. (32nd, 16th, 8th, 4th, 1/2, and whole notes) \A \A Middle: Excludes 32nd notes (longest note duration is a 16th). \A \A Right: Excludes 32nd and 16th (longest note duration is an 8th note). \A \A Typically stay on the default but if your song plays back too fast in parts, try removing the faster notes for better playback. \A \A * Rest durations are unaffected by the slider. \A \A  Watch tutorial for detailed explanation.";
+
+    display: block;
+    position: absolute;
+    bottom: -300px;
+    left: 0;
+    width: 300px;
+    background-color: white;
+    color: black;
+    text-align: left;
+    border: 1px solid #aaa;
+    padding: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    width: 670%; /* Change this to 100% */
+    max-width: 475px; /* Add this line */
+    z-index: 1000;
+}
+
+#slider-container:not(:hover)::after {
+    content: "";
+}
+
+
+@media screen and (max-width: 768px) {
+    /* Add your styles for mobile screens here */
+    #piano {
+        transform: rotate(-90deg) translateY(-100%);
+        transform-origin: top left;
+    }
+    .white-key {
+        width: 25px;
+        height: 140px;
+        border: 1px solid #000;
+        background-color: #fff;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Adjust the style of the black keys */
+    .black-key {
+        width: 18px;
+        height: 90px;
+        border: 1px solid #000;
+        background-color: #000;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+        z-index: 2;
+    }
+}
