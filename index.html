@@ -4,7 +4,119 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Arduino Piano Buzzer Song Creator</title>
-  <link rel="stylesheet" href="./styles.css">
+  <style>
+   body {
+  font-family: Arial, sans-serif;
+}
+.white {
+  display: inline-block;
+  background-color: white;
+  border: 1px solid black;
+  height: 150px;
+  width: 50px;
+  text-align: center;
+  line-height: 150px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.black {
+  display: inline-block;
+  background-color: black;
+  border: 1px solid black;
+  height: 100px;
+  width: 30px;
+  margin-left: -20px;
+  margin-right: -20px;
+  z-index: 1;
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  position: relative;
+  line-height:150px; /* Adjust this value */
+
+}
+
+.black::before {
+  content: attr(data-key);
+  position: absolute;
+  top: 40%;  /* Adjust this value to move black key text up or down */
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 8px; /*black keys */
+}
+
+
+.white.pressed {
+  background-color: #ccc;
+}
+.black.pressed {
+  background-color: #333;
+}
+
+input[type=range] {
+  width: 6.6%; /* Adjusts the slider  width */
+}
+
+
+#slider-container {
+  position: relative;
+  display: inline-block;
+}
+
+#slider-container:hover::after {
+    content: "SLIDER CONTROL \A \A Use the quantization slider to remove certain note durations while recording. \A \A Left (default): Full range of note durations. (32nd, 16th, 8th, 4th, 1/2, and whole notes) \A \A Middle: Excludes 32nd notes (longest note duration is a 16th). \A \A Right: Excludes 32nd and 16th (longest note duration is an 8th note). \A \A Typically stay on the default but if your song plays back too fast in parts, try removing the faster notes for better playback. \A \A * Rest durations are unaffected by the slider. \A \A  Watch tutorial for detailed explanation.";
+
+  display: block;
+  position: absolute;
+  bottom: -300px;
+  left: 0;
+  width: 300px;
+  background-color: white;
+  color: black;
+  text-align: left;
+  border: 1px solid #aaa;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  width: 670%; /* Change this to 100% */
+  max-width: 475px; /* Add this line */
+  z-index: 1000;
+}
+
+#slider-container:not(:hover)::after {
+  content: "";
+}
+
+
+@media screen and (max-width: 768px) {
+  /* Add your styles for mobile screens here */
+  #piano {
+    transform: rotate(-90deg) translateY(-100%);
+    transform-origin: top left;
+  }
+  .white-key {
+    width: 25px;
+    height: 140px;
+    border: 1px solid #000;
+    background-color: #fff;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Adjust the style of the black keys */
+  .black-key {
+    width: 18px;
+    height: 90px;
+    border: 1px solid #000;
+    background-color: #000;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+  }
+}}
+
+
+  </style>
 </head>
 <body>
   <h1>Arduino Piano Buzzer Song Creator V1.1 <br> <small>by momentollogy</small><br></h1>
@@ -82,22 +194,13 @@
 
   
 <!-- LOAD ARRAY TEXTAREA UI -->
-  <div style="position: absolute; right: 0px; top: 116px; padding-right: 50px;">
+  <div style="position: absolute; right: 0px; top: 116px; padding-right: 500px;">
     <textarea id="songInput" placeholder="Paste song array" style="width: 288px; height: 145px;
      overflow: auto; text-align: center;"></textarea>
     <br>
     <button onclick="window.open('https://docs.google.com/spreadsheets/d/1C9cqSvijRkJepxErd_jL0HQ4PCrjC0h7arOYj41DDOg/edit#gid=0', '_blank');">Browse/Save To Library</button>
     <button id="loadSongButton" onclick="loadSongFromInput()">Load Song</button>
     <button id="clearArray" onclick="clearSongArray()">Clear</button>
-  </div>
-
-  <div style="position: absolute; text-align: right; right: 0px; top: 325px; padding-right: 60px;">
-    <strong>Midi Keyboard Information</strong><br/>
-    <span>Id: </span><span id="midi-id"></span><br/>
-    <span>Name: </span><span id="midi-name"></span><br/>
-    <span>Manufacturer: </span><span id="midi-manu"></span><br/>
-    <span>Keys outside of the range A3-G5 do not work.</span><br>
-    <span>Midi keyboard mod made by ItzHex.</span>
   </div>
   
   
@@ -437,7 +540,6 @@ const pianoKeys = document.querySelectorAll('.key');
 pianoKeys.forEach(key => {
   key.addEventListener('mousedown', () => {
     const keyCode = key.dataset.note;
-    console.log(keyCode);
     if (!playingNotes.has(keyCode)) {
       playingNotes.add(keyCode);
       playAndRecord(frequencies[keyCode], key);
@@ -816,83 +918,6 @@ function copySongToClipboard(songString) {
   alert('Song copied to clipboard');
 }
 
-
-// CODE FOR MIDI KEYBOARD - ItzHex
-
-const miditoKeyCode = {
-  57: 192,
-  58: 49,
-  59: 81,
-  60: 65,
-  61: 87,
-  62: 83,
-  63: 69,
-  64: 68,
-  65: 70,
-  66: 84,
-  67: 71,
-  68: 89,
-  69: 72,
-  70: 85,
-  71: 74,
-  72: 75,
-  73: 79,
-  74: 76,
-  75: 80,
-  76: 59,
-  77: 222,
-  78: 221,
-  79: 220,
-}
-
-
-navigator.requestMIDIAccess()
-    .then(onMIDISuccess, onMIDIFailure);
-
-function onMIDISuccess(midiAccess) {
-    for (var input of midiAccess.inputs.values()) {
-        input.onmidimessage = getMIDIMessage;
-        document.querySelector("#midi-id").innerHTML = input.id
-        document.querySelector("#midi-name").innerHTML = input.name
-        document.querySelector("#midi-manu").innerHTML = input.manufacturer
-    }
-}
-
-function getMIDIMessage(message) {
-    var command = message.data[0];
-    var note = message.data[1];
-
-    switch (command) {
-        case 144: // noteOn
-            noteOn(note);
-            break;
-        case 128: // noteOff
-            noteOff(note);
-            break;
-    }
-}
-
-function noteOn(note) {
-  const keyCode = miditoKeyCode[note];
-  const key = document.querySelector(`[data-note="${keyCode}"]`);
-  if (!playingNotes.has(keyCode)) {
-    playingNotes.add(keyCode);
-    playAndRecord(frequencies[keyCode], key);
-  }
-}
-
-function noteOff(note) {
-  const keyCode = miditoKeyCode[note];
-  const key = document.querySelector(`[data-note="${keyCode}"]`);
-  if (playingNotes.has(keyCode)) {
-    playingNotes.delete(keyCode);
-    key.dispatchEvent(new MouseEvent('mouseup'));
-  }
-}
-
-function onMIDIFailure() {
-    console.warn('Could not access your MIDI devices. Ignore this warning if you are not trying to use any MIDI devices. Otherwise, try using the latest version of Google Chrome.');
-}
 
 
 
